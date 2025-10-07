@@ -1,15 +1,20 @@
 package com.aleon.proyectocellcli.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -22,14 +27,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.patrykandpatrick.vico.compose.chart.Chart
-import com.patrykandpatrick.vico.compose.chart.column.columnChart
-import com.patrykandpatrick.vico.core.entry.entryModelOf
-import com.patrykandpatrick.vico.core.entry.entryOf
 
 // Data class moved to the top level to be accessible throughout the file
 data class CategoryTotal(val name: String, val amount: Double)
@@ -51,33 +54,60 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 }
 
-// 1. Composable for the Chart
+// 1. Composable for the Chart (Replaced with a basic Compose simulation)
 @Composable
 fun ChartCard() {
+    val chartData = remember { mapOf(
+        "Comida" to 4f,
+        "Transporte" to 2f,
+        "Ocio" to 1f,
+        "Hogar" to 3f
+    )}
+    val colors = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.secondary,
+        MaterialTheme.colorScheme.tertiary,
+        MaterialTheme.colorScheme.primaryContainer
+    )
+    val maxVal = chartData.values.maxOrNull() ?: 1f
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Resumen de Gastos", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            // Placeholder Chart: Using ColumnChart instead of PieChart
-            Chart(
-                chart = columnChart(),
-                model = remember {
-                    val entries = listOf(
-                        entryOf(0f, 4f), // Comida
-                        entryOf(1f, 2f), // Transporte
-                        entryOf(2f, 1f), // Ocio
-                        entryOf(3f, 3f)  // Hogar
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                chartData.values.forEachIndexed { index, value ->
+                    Bar(
+                        value = value,
+                        maxValue = maxVal,
+                        color = colors.getOrElse(index) { Color.Gray }
                     )
-                    entryModelOf(entries)
-                },
-                modifier = Modifier.height(200.dp)
-            )
+                }
+            }
         }
     }
 }
+
+@Composable
+fun Bar(value: Float, maxValue: Float, color: Color) {
+    Box(
+        modifier = Modifier
+            .width(40.dp)
+            .fillMaxHeight(fraction = value / maxValue)
+            .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+            .background(color)
+    )
+}
+
 
 // 2. Composable for the Day/Week/Month selector
 @Composable

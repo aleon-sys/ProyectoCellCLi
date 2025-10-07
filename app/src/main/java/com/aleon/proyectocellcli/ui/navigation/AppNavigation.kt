@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.aleon.proyectocellcli.ui.screens.AddOutlayScreen
 import com.aleon.proyectocellcli.ui.screens.DashboardScreen
 import com.aleon.proyectocellcli.ui.screens.HomeScreen
+import com.aleon.proyectocellcli.ui.screens.SettingsScreen
 
 @Composable
 fun AppNavigation() {
@@ -30,6 +31,9 @@ fun AppNavigation() {
             }
             composable(Screen.DashboardScreen.route) {
                 DashboardScreen()
+            }
+            composable(Screen.SettingsScreen.route) {
+                SettingsScreen()
             }
         }
     }
