@@ -15,6 +15,6 @@ interface ExpenseRepository {
     suspend fun updateCategory(category: Category)
 
     suspend fun addExpense(expense: Expense)
-    
-    // We will add more functions like getExpenses, deleteExpense, etc. later
+
+    fun getExpenses(): Flow<List<Expense>>
 }

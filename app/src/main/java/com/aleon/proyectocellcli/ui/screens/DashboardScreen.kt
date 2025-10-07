@@ -1,58 +1,59 @@
-package com.aleon.proyectocellcli.ui.screens
-
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.aleon.proyectocellcli.domain.model.Expense
+import com.aleon.proyectocellcli.ui.viewmodel.DashboardViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-
-// --- Data Model for the Screen ---
-data class Expense(
-    val id: Int,
-    val description: String,
-    val amount: Double,
-    val category: String,
-    val date: LocalDate
-)
 
 // --- Main Composable ---
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DashboardScreen(modifier: Modifier = Modifier) {
-    // --- Sample Data ---
-    val sampleExpenses = remember {
-        listOf(
-            Expense(1, "Café y croissant", 5.50, "Comida", LocalDate.now()),
-            Expense(2, "Ticket de metro", 2.40, "Transporte", LocalDate.now()),
-            Expense(3, "Cine", 12.00, "Ocio", LocalDate.now().minusDays(1)),
-            Expense(4, "Factura de la luz", 75.20, "Hogar", LocalDate.now().minusDays(1)),
-            Expense(5, "Supermercado", 62.30, "Comida", LocalDate.now().minusDays(1)),
-            Expense(6, "Gasolina", 50.00, "Transporte", LocalDate.now().minusDays(2))
-        ).groupBy { it.date } // Group expenses by date
-    }
-    
+fun DashboardScreen(
+    modifier: Modifier = Modifier,
+    viewModel: DashboardViewModel = hiltViewModel()
+) {
+    val expensesByDate by viewModel.expensesByDate.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
@@ -81,7 +82,7 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(vertical = 16.dp)
         )
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            sampleExpenses.forEach { (date, expenses) ->
+            expensesByDate.forEach { (date, expenses) ->
                 stickyHeader {
                     DateHeader(date = date)
                 }
@@ -98,7 +99,7 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DateHeader(date: LocalDate) {
-    val formatter = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM", Locale("es", "ES"))
+    val formatter = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM")
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -129,11 +130,19 @@ fun ExpenseItem(expense: Expense) {
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = expense.category,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(expense.category.color, shape = CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = expense.category.name, // Correctly access the 'name' property
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             Text(
                 text = "$${"%.2f".format(expense.amount)}",
@@ -153,10 +162,3 @@ fun ExpenseItem(expense: Expense) {
     }
 }
 
-// --- Preview ---
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun DashboardScreenPreview() {
-    DashboardScreen()
-}

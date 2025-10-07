@@ -4,9 +4,11 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.aleon.proyectocellcli.data.local.entity.CategoryEntity
 import com.aleon.proyectocellcli.data.local.entity.ExpenseEntity
+import com.aleon.proyectocellcli.data.local.entity.ExpenseWithCategory
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -23,6 +25,8 @@ interface ExpenseDao {
 
     @Query("SELECT * FROM categories ORDER BY name ASC")
     fun getAllCategories(): Flow<List<CategoryEntity>>
-    
-    // We will add more functions like delete, and get expenses later.
+
+    @Transaction
+    @Query("SELECT * FROM expenses ORDER BY dateValue DESC")
+    fun getExpensesWithCategory(): Flow<List<ExpenseWithCategory>>
 }

@@ -6,12 +6,14 @@ import androidx.compose.ui.graphics.toArgb
 import com.aleon.proyectocellcli.data.local.dao.ExpenseDao
 import com.aleon.proyectocellcli.data.local.entity.CategoryEntity
 import com.aleon.proyectocellcli.data.local.entity.ExpenseEntity
+import com.aleon.proyectocellcli.data.local.entity.ExpenseWithCategory
 import com.aleon.proyectocellcli.data.local.entity.toDomain
 import com.aleon.proyectocellcli.domain.model.Category
 import com.aleon.proyectocellcli.domain.model.Expense
 import com.aleon.proyectocellcli.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -42,9 +44,28 @@ class ExpenseRepositoryImpl @Inject constructor(
     override suspend fun addExpense(expense: Expense) {
         dao.insertExpense(expense.toEntity())
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun getExpenses(): Flow<List<Expense>> {
+        return dao.getExpensesWithCategory().map { list ->
+            list.map { it.toDomain() }
+        }
+    }
 }
 
 // --- Mapper Functions ---
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun ExpenseWithCategory.toDomain(): Expense {
+    return Expense(
+        id = this.expense.expenseId,
+        description = this.expense.description,
+        amount = this.expense.amount,
+        date = LocalDate.ofEpochDay(this.expense.dateValue),
+        category = this.category.toDomain()
+    )
+}
+
 
 private fun Category.toEntity(): CategoryEntity {
     return CategoryEntity(
