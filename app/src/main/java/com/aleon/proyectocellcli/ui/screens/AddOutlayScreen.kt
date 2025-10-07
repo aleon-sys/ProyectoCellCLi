@@ -1,5 +1,7 @@
 package com.aleon.proyectocellcli.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -17,33 +19,28 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import java.util.UUID
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.aleon.proyectocellcli.domain.model.Category
+import com.aleon.proyectocellcli.ui.viewmodel.AddOutlayViewModel
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
+import java.util.UUID
 
-// --- Data Model ---
-data class Category(
-    val id: String = UUID.randomUUID().toString(),
-    val name: String,
-    val color: Color
-)
-
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddOutlayScreen(modifier: Modifier = Modifier) {
+fun AddOutlayScreen(
+    modifier: Modifier = Modifier,
+    viewModel: AddOutlayViewModel = hiltViewModel()
+) {
     // --- State ---
     var description by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
 
-    val categories = remember { mutableStateListOf(
-        Category(name = "Comida", color = Color(0xFFFACD3D)),
-        Category(name = "Transporte", color = Color(0xFF5B94E3)),
-        Category(name = "Ocio", color = Color(0xFFE35B5B)),
-        Category(name = "Hogar", color = Color(0xFF68C67D))
-    )}
-    var selectedCategory by remember { mutableStateOf(categories.first()) }
-    var isDropdownExpanded by remember { mutableStateOf(false) }
+    val categories by viewModel.categories.collectAsState()
+    var selectedCategory by remember(categories) { mutableStateOf(categories.firstOrNull()) }
 
+    var isDropdownExpanded by remember { mutableStateOf(false) }
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
     var showCategoryDialog by remember { mutableStateOf(false) }
 
@@ -61,58 +58,56 @@ fun AddOutlayScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            ExposedDropdownMenuBox(expanded = isDropdownExpanded, onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }, modifier = Modifier.weight(1f)) {
-                OutlinedTextField(
-                    value = selectedCategory.name,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Categoría") },
-                    leadingIcon = { Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(selectedCategory.color)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded) },
-                    modifier = Modifier.menuAnchor()
-                )
-                ExposedDropdownMenu(expanded = isDropdownExpanded, onDismissRequest = { isDropdownExpanded = false }) {
-                    categories.forEach { category ->
-                        DropdownMenuItem(
-                            text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(category.color))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(category.name)
-                                }
-                            },
-                            onClick = {
-                                selectedCategory = category
-                                isDropdownExpanded = false
-                            },
-                            trailingIcon = {
-                                Row {
-                                    IconButton(onClick = {
-                                        categoryToEdit = category
-                                        showCategoryDialog = true
-                                    }) {
-                                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar categoría")
+            if (categories.isNotEmpty() && selectedCategory != null) {
+                ExposedDropdownMenuBox(expanded = isDropdownExpanded, onExpandedChange = { isDropdownExpanded = !isDropdownExpanded }, modifier = Modifier.weight(1f)) {
+                    OutlinedTextField(
+                        value = selectedCategory!!.name,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Categoría") },
+                        leadingIcon = { Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(selectedCategory!!.color)) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded) },
+                        modifier = Modifier.menuAnchor()
+                    )
+                    ExposedDropdownMenu(expanded = isDropdownExpanded, onDismissRequest = { isDropdownExpanded = false }) {
+                        categories.forEach { category ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(category.color))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(category.name)
                                     }
-                                    if (categories.size > 1) {
+                                },
+                                onClick = {
+                                    selectedCategory = category
+                                    isDropdownExpanded = false
+                                },
+                                trailingIcon = {
+                                    Row {
                                         IconButton(onClick = {
-                                            val wasSelected = selectedCategory.id == category.id
-                                            categories.remove(category)
-                                            if (wasSelected) {
-                                                selectedCategory = categories.first()
-                                            }
+                                            categoryToEdit = category
+                                            showCategoryDialog = true
                                         }) {
-                                            Icon(imageVector = Icons.Default.Close, contentDescription = "Borrar categoría")
+                                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar categoría")
+                                        }
+                                        if (categories.size > 1) {
+                                            IconButton(onClick = {
+                                                // TODO: viewModel.onDeleteCategory(category)
+                                            }) {
+                                                Icon(imageVector = Icons.Default.Close, contentDescription = "Borrar categoría")
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(onClick = {
-                categoryToEdit = null // Set to null for "Add New" mode
+                categoryToEdit = null
                 showCategoryDialog = true
             }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Añadir categoría")
@@ -120,7 +115,15 @@ fun AddOutlayScreen(modifier: Modifier = Modifier) {
         }
 
         Spacer(modifier = Modifier.weight(1f))
-        Button(onClick = { /* TODO */ }, modifier = Modifier.fillMaxWidth().height(50.dp)) {
+        Button(
+            onClick = {
+                selectedCategory?.let {
+                    viewModel.onSaveExpense(description, amount, it)
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            enabled = selectedCategory != null
+        ) {
             Text("Guardar Gasto")
         }
     }
@@ -130,15 +133,10 @@ fun AddOutlayScreen(modifier: Modifier = Modifier) {
             category = categoryToEdit,
             onDismiss = { showCategoryDialog = false },
             onSave = { updatedCategory ->
-                val index = categories.indexOfFirst { it.id == updatedCategory.id }
-                if (index != -1) { // Editing existing
-                    categories[index] = updatedCategory
-                    if (selectedCategory.id == updatedCategory.id) {
-                        selectedCategory = updatedCategory
-                    }
-                } else { // Adding new
-                    categories.add(updatedCategory)
-                    selectedCategory = updatedCategory
+                if (categoryToEdit == null) {
+                    viewModel.onAddCategory(updatedCategory.name, updatedCategory.color)
+                } else {
+                    viewModel.onUpdateCategory(updatedCategory)
                 }
                 showCategoryDialog = false
             }
@@ -163,7 +161,7 @@ fun CategoryEditDialog(category: Category?, onDismiss: () -> Unit, onSave: (Cate
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 HsvColorPicker(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -175,7 +173,7 @@ fun CategoryEditDialog(category: Category?, onDismiss: () -> Unit, onSave: (Cate
         confirmButton = {
             Button(onClick = {
                 if (name.isNotBlank()) {
-                    val newCategory = category?.copy(name = name, color = controller.selectedColor.value) 
+                    val newCategory = category?.copy(name = name, color = controller.selectedColor.value)
                         ?: Category(name = name, color = controller.selectedColor.value)
                     onSave(newCategory)
                 }
@@ -190,5 +188,5 @@ fun CategoryEditDialog(category: Category?, onDismiss: () -> Unit, onSave: (Cate
 @Preview(showBackground = true)
 @Composable
 fun AddOutlayScreenPreview() {
-    AddOutlayScreen()
+    // Preview won't work with Hilt ViewModel by default.
 }
