@@ -72,11 +72,11 @@ dependencies {
     // Color Picker
     implementation("com.github.skydoves:colorpicker-compose:1.0.0")
 
-    // YCharts
-    implementation("co.yml:ycharts:2.1.0")
-
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // MPAndroidChart
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
