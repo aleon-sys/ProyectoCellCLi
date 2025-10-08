@@ -1,6 +1,7 @@
 package com.aleon.proyectocellcli.ui.viewmodel
 
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aleon.proyectocellcli.domain.model.Category
@@ -12,9 +13,12 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
-data class AddOutlayUiState(
-    val totalMonthlyExpenses: Double = 0.0,
-    val monthlyLimit: Double = 0.0
+data class AddOutlayFormState(
+    val expenseId: Int? = null,
+    val description: String = "",
+    val amount: String = "",
+    val date: LocalDate = LocalDate.now(),
+    val category: Category? = null
 )
 
 sealed class AddOutlayEvent {
@@ -28,84 +32,117 @@ class AddOutlayViewModel @Inject constructor(
     private val addCategoryUseCase: AddCategoryUseCase,
     private val addExpenseUseCase: AddExpenseUseCase,
     private val updateCategoryUseCase: UpdateCategoryUseCase,
+    private val getExpenseByIdUseCase: GetExpenseByIdUseCase,
+    private val updateExpenseUseCase: UpdateExpenseUseCase,
     getCurrencyUseCase: GetCurrencyUseCase,
     getMonthlyLimitUseCase: GetMonthlyLimitUseCase,
-    getExpensesForCurrentMonthUseCase: GetExpensesForCurrentMonthUseCase
+    getExpensesForCurrentMonthUseCase: GetExpensesForCurrentMonthUseCase,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private val _formState = MutableStateFlow(AddOutlayFormState())
+    val formState = _formState.asStateFlow()
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
     val categories = _categories.asStateFlow()
 
-    private val _uiState = MutableStateFlow(AddOutlayUiState())
-    val uiState = _uiState.asStateFlow()
-
     private val _eventFlow = MutableSharedFlow<AddOutlayEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
+    
+    // Other states remain the same...
+    val currencySymbol = getCurrencyUseCase().map { it.substringAfter("(").substringBefore(")") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "$")
 
-    val currencySymbol = getCurrencyUseCase().map { currencyString ->
-        currencyString.substringAfter("(").substringBefore(")")
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = "$"
-    )
+    private val totalMonthlyExpenses = MutableStateFlow(0.0)
+    private val monthlyLimit = MutableStateFlow(0.0)
 
     init {
         loadCategories()
-
-        combine(
-            getMonthlyLimitUseCase(),
-            getExpensesForCurrentMonthUseCase()
-        ) { limit, expenses ->
-            _uiState.value = AddOutlayUiState(
-                totalMonthlyExpenses = expenses.sumOf { it.amount },
-                monthlyLimit = limit
-            )
+        
+        combine(getMonthlyLimitUseCase(), getExpensesForCurrentMonthUseCase()) { limit, expenses ->
+            totalMonthlyExpenses.value = expenses.sumOf { it.amount }
+            monthlyLimit.value = limit
         }.launchIn(viewModelScope)
+
+        savedStateHandle.get<Int>("expenseId")?.let { expenseId ->
+            if (expenseId != -1) {
+                viewModelScope.launch {
+                    getExpenseByIdUseCase(expenseId)?.let { expense ->
+                        _formState.value = AddOutlayFormState(
+                            expenseId = expense.id,
+                            description = expense.description,
+                            amount = expense.amount.toString(),
+                            date = expense.date,
+                            category = expense.category
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun loadCategories() {
         getCategoriesUseCase().onEach { categoryList ->
             _categories.value = categoryList
+            if (_formState.value.category == null) {
+                _formState.value = _formState.value.copy(category = categoryList.firstOrNull())
+            }
         }.launchIn(viewModelScope)
     }
 
-    fun onAddCategory(name: String, color: Color) {
-        viewModelScope.launch {
-            addCategoryUseCase(Category(name = name, color = color))
+    // --- Form State Updaters ---
+    fun onDescriptionChange(newDescription: String) {
+        _formState.value = _formState.value.copy(description = newDescription)
+    }
+    fun onAmountChange(newAmount: String) {
+        _formState.value = _formState.value.copy(amount = newAmount)
+    }
+    fun onDateChange(newDate: LocalDate) {
+        _formState.value = _formState.value.copy(date = newDate)
+    }
+    fun onCategoryChange(newCategory: Category) {
+        _formState.value = _formState.value.copy(category = newCategory)
+    }
+
+    fun resetForm() {
+        _formState.value = AddOutlayFormState(category = categories.value.firstOrNull())
+    }
+
+    // --- Business Logic ---
+    fun onSaveExpense() {
+        val currentState = _formState.value
+        val amountDouble = currentState.amount.toDoubleOrNull()
+        if (currentState.description.isBlank() || amountDouble == null || amountDouble <= 0 || currentState.category == null) {
+            return // Basic validation
         }
+
+        if (monthlyLimit.value > 0 && (totalMonthlyExpenses.value + amountDouble > monthlyLimit.value)) {
+            viewModelScope.launch { _eventFlow.emit(AddOutlayEvent.LimitExceeded) }
+        }
+
+        val expenseToSave = Expense(
+            id = currentState.expenseId ?: 0,
+            description = currentState.description,
+            amount = amountDouble,
+            date = currentState.date,
+            category = currentState.category
+        )
+
+        viewModelScope.launch {
+            if (currentState.expenseId == null) {
+                addExpenseUseCase(expenseToSave)
+            } else {
+                updateExpenseUseCase(expenseToSave)
+            }
+            _eventFlow.emit(AddOutlayEvent.SaveSuccess)
+        }
+    }
+    
+    fun onAddCategory(name: String, color: Color) {
+        viewModelScope.launch { addCategoryUseCase(Category(name = name, color = color)) }
     }
 
     fun onUpdateCategory(category: Category) {
-        viewModelScope.launch {
-            updateCategoryUseCase(category)
-        }
-    }
-
-    fun onSaveExpense(description: String, amount: String, category: Category, date: LocalDate) {
-        val amountDouble = amount.toDoubleOrNull()
-        if (description.isBlank() || amountDouble == null || amountDouble <= 0) {
-            // TODO: Handle validation error
-            return
-        }
-
-        val currentState = _uiState.value
-        if (currentState.monthlyLimit > 0 && (currentState.totalMonthlyExpenses + amountDouble > currentState.monthlyLimit)) {
-            viewModelScope.launch {
-                _eventFlow.emit(AddOutlayEvent.LimitExceeded)
-            }
-        }
-
-        viewModelScope.launch {
-            addExpenseUseCase(
-                Expense(
-                    description = description,
-                    amount = amountDouble,
-                    date = date,
-                    category = category
-                )
-            )
-            _eventFlow.emit(AddOutlayEvent.SaveSuccess)
-        }
+        viewModelScope.launch { updateCategoryUseCase(category) }
     }
 }

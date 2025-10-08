@@ -8,8 +8,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.aleon.proyectocellcli.ui.screens.AddOutlayScreen
 
 import com.aleon.proyectocellcli.ui.screens.HomeScreen
@@ -30,11 +32,19 @@ fun AppNavigation() {
             composable(Screen.HomeScreen.route) {
                 HomeScreen()
             }
-            composable(Screen.AddOutlayScreen.route) {
-                AddOutlayScreen()
+            composable(
+                route = Screen.AddOutlayScreen.route,
+                arguments = listOf(
+                    navArgument("expenseId") {
+                        type = NavType.IntType
+                        defaultValue = -1
+                    }
+                )
+            ) {
+                AddOutlayScreen(navController = navController)
             }
             composable(Screen.DashboardScreen.route) {
-                DashboardScreen()
+                DashboardScreen(navController = navController)
             }
             composable(Screen.SettingsScreen.route) {
                 SettingsScreen()

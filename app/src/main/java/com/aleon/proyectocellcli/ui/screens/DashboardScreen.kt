@@ -40,7 +40,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.aleon.proyectocellcli.domain.model.Expense
+import com.aleon.proyectocellcli.ui.navigation.Screen
 import com.aleon.proyectocellcli.ui.viewmodel.DashboardViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -51,7 +53,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: DashboardViewModel = hiltViewModel(),
+    navController: NavController
 ) {
     val expensesByDate by viewModel.expensesByDate.collectAsState()
     val currencySymbol by viewModel.currencySymbol.collectAsState()
@@ -91,7 +94,8 @@ fun DashboardScreen(
                     ExpenseItem(
                         expense = expense,
                         currencySymbol = currencySymbol,
-                        onDelete = { viewModel.onDeleteExpense(expense) }
+                        onDelete = { viewModel.onDeleteExpense(expense) },
+                        onEdit = { navController.navigate(Screen.AddOutlayScreen.withArgs(expense.id)) }
                     )
                 }
             }
@@ -123,7 +127,8 @@ fun DateHeader(date: LocalDate) {
 fun ExpenseItem(
     expense: Expense,
     currencySymbol: String,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -160,7 +165,7 @@ fun ExpenseItem(
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             Row {
-                IconButton(onClick = { /* TODO: Edit logic */ }) {
+                IconButton(onClick = onEdit) {
                     Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Gasto")
                 }
                 IconButton(onClick = onDelete) {
