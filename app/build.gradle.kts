@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.aleon.proyectocellcli"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -62,6 +62,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.runtime)
+    implementation(libs.androidx.foundation.layout)
     kapt("androidx.room:room-compiler:2.6.1")
 
     // Navigation Compose
@@ -74,6 +75,12 @@ dependencies {
 
     // Color Picker
     implementation("com.github.skydoves:colorpicker-compose:1.0.0")
+
+    // YCharts
+    implementation("co.yml:ycharts:2.1.0")
+
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.51.1")

@@ -54,7 +54,7 @@ class AddOutlayViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun onSaveExpense(description: String, amount: String, category: Category) {
+    fun onSaveExpense(description: String, amount: String, category: Category, date: LocalDate) {
         val amountDouble = amount.toDoubleOrNull()
         if (description.isBlank() || amountDouble == null || amountDouble <= 0) {
             // TODO: Handle validation error
@@ -66,7 +66,7 @@ class AddOutlayViewModel @Inject constructor(
                 Expense(
                     description = description,
                     amount = amountDouble,
-                    date = LocalDate.now(),
+                    date = date,
                     category = category
                 )
             )

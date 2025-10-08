@@ -1,40 +1,24 @@
 package com.aleon.proyectocellcli.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.yml.charts.common.model.PlotType
+import co.yml.charts.ui.piechart.charts.PieChart
+import co.yml.charts.ui.piechart.models.PieChartConfig
+import co.yml.charts.ui.piechart.models.PieChartData
 
-// Data class moved to the top level to be accessible throughout the file
+// Data class for the list items
 data class CategoryTotal(val name: String, val amount: Double)
 
 // Main Composable for the Home Screen
@@ -54,60 +38,78 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 }
 
-// 1. Composable for the Chart (Replaced with a basic Compose simulation)
+// 1. Composable for the Donut Chart using ycharts (STABLE VERSION)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChartCard() {
-    val chartData = remember { mapOf(
-        "Comida" to 4f,
-        "Transporte" to 2f,
-        "Ocio" to 1f,
-        "Hogar" to 3f
-    )}
-    val colors = listOf(
-        MaterialTheme.colorScheme.primary,
-        MaterialTheme.colorScheme.secondary,
-        MaterialTheme.colorScheme.tertiary,
-        MaterialTheme.colorScheme.primaryContainer
+    val pieChartData = PieChartData(
+        slices = listOf(
+            PieChartData.Slice("Comida", 4f, MaterialTheme.colorScheme.primary),
+            PieChartData.Slice("Transporte", 2f, MaterialTheme.colorScheme.secondary),
+            PieChartData.Slice("Ocio", 1f, MaterialTheme.colorScheme.tertiary),
+            PieChartData.Slice("Hogar", 3f, MaterialTheme.colorScheme.primaryContainer)
+        ),
+        plotType = PlotType.Donut
     )
-    val maxVal = chartData.values.maxOrNull() ?: 1f
+
+    val pieChartConfig = PieChartConfig(
+        backgroundColor = MaterialTheme.colorScheme.surface
+    )
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.5f),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text("Resumen de Gastos", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.Bottom
+            
+            BoxWithConstraints(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
-                chartData.values.forEachIndexed { index, value ->
-                    Bar(
-                        value = value,
-                        maxValue = maxVal,
-                        color = colors.getOrElse(index) { Color.Gray }
-                    )
-                }
+                val chartSize = minOf(maxWidth, maxHeight)
+                PieChart(
+                    modifier = Modifier.size(chartSize),
+                    pieChartData = pieChartData,
+                    pieChartConfig = pieChartConfig
+                )
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            ChartLegend(slices = pieChartData.slices)
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun Bar(value: Float, maxValue: Float, color: Color) {
-    Box(
-        modifier = Modifier
-            .width(40.dp)
-            .fillMaxHeight(fraction = value / maxValue)
-            .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-            .background(color)
-    )
+fun ChartLegend(slices: List<PieChartData.Slice>, modifier: Modifier = Modifier) {
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        slices.forEach { slice ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(end = 16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .background(slice.color, shape = CircleShape)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = slice.label, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
 }
-
 
 // 2. Composable for the Day/Week/Month selector
 @Composable
@@ -182,7 +184,6 @@ fun CategoryTotalItem(category: CategoryTotal) {
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable

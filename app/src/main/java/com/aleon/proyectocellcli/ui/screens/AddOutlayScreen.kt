@@ -3,6 +3,7 @@ package com.aleon.proyectocellcli.ui.screens
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +26,11 @@ import com.aleon.proyectocellcli.domain.model.Category
 import com.aleon.proyectocellcli.ui.viewmodel.AddOutlayViewModel
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -36,10 +43,12 @@ fun AddOutlayScreen(
     // --- State ---
     var description by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    
     val categories by viewModel.categories.collectAsState()
     var selectedCategory by remember(categories) { mutableStateOf(categories.firstOrNull()) }
-
+    
     var isDropdownExpanded by remember { mutableStateOf(false) }
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
     var showCategoryDialog by remember { mutableStateOf(false) }
@@ -54,7 +63,38 @@ fun AddOutlayScreen(
 
         OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("Monto") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), leadingIcon = { Text("$") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            value = amount,
+            onValueChange = { newAmount ->
+                // Regex to allow only numbers and up to two decimal places
+                if (newAmount.matches(Regex("^\\d*(\\.\\d{0,2})?\$"))) {
+                    amount = newAmount
+                }
+            },
+            label = { Text("Monto") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            leadingIcon = { Text("$") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Date Picker Field
+        Box {
+            OutlinedTextField(
+                value = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Fecha") },
+                leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = "Date Icon") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            // Transparent box to intercept clicks
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { showDatePicker = true }
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -118,13 +158,41 @@ fun AddOutlayScreen(
         Button(
             onClick = {
                 selectedCategory?.let {
-                    viewModel.onSaveExpense(description, amount, it)
+                    viewModel.onSaveExpense(description, amount, it, selectedDate)
+                    // Clear fields after saving
+                    description = ""
+                    amount = ""
+                    selectedDate = LocalDate.now()
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             enabled = selectedCategory != null
         ) {
             Text("Guardar Gasto")
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("Aceptar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 

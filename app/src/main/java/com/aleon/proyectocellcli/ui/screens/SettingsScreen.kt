@@ -14,12 +14,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.aleon.proyectocellcli.ui.viewmodel.SettingsViewModel
 
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
-    var selectedTheme by remember { mutableStateOf("Sistema") }
-    var selectedCurrency by remember { mutableStateOf("USD ($)") }
-    var monthlyLimit by remember { mutableStateOf("") }
+fun SettingsScreen(
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = hiltViewModel()
+) {
+    val selectedTheme by viewModel.theme.collectAsState()
+    val selectedCurrency by viewModel.currency.collectAsState()
+    
+    var monthlyLimit by remember { mutableStateOf("") } // This remains local for now
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
 
@@ -38,7 +44,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         SettingSection(title = "Tema de la Aplicación") {
             ThemeSelector(
                 selectedTheme = selectedTheme,
-                onThemeSelected = { selectedTheme = it }
+                onThemeSelected = { viewModel.onThemeSelected(it) }
             )
         }
 
@@ -95,7 +101,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     if (showCurrencyDialog) {
         CurrencySelectionDialog(
             onCurrencySelected = {
-                selectedCurrency = it
+                viewModel.onCurrencySelected(it)
                 showCurrencyDialog = false
             },
             onDismiss = { showCurrencyDialog = false }
