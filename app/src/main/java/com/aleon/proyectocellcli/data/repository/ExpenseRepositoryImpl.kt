@@ -2,6 +2,7 @@ package com.aleon.proyectocellcli.data.repository
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.aleon.proyectocellcli.data.local.dao.ExpenseDao
 import com.aleon.proyectocellcli.data.local.entity.CategoryEntity
@@ -40,20 +41,55 @@ class ExpenseRepositoryImpl @Inject constructor(
         dao.updateCategory(category.toEntity())
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun addExpense(expense: Expense) {
         dao.insertExpense(expense.toEntity())
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun deleteExpense(expense: Expense) {
+        dao.deleteExpense(expense.toEntityWithId())
+    }
+
     override fun getExpenses(): Flow<List<Expense>> {
         return dao.getExpensesWithCategory().map { list ->
             list.map { it.toDomain() }
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun getExpensesForCurrentMonth(): Flow<List<Expense>> {
+        val today = LocalDate.now()
+        val firstDayOfMonth = today.withDayOfMonth(1)
+        val lastDayOfMonth = today.withDayOfMonth(today.lengthOfMonth())
+
+        return dao.getExpensesBetweenDates(firstDayOfMonth.toEpochDay(), lastDayOfMonth.toEpochDay()).map { list ->
+            list.map {
+                Expense(
+                    id = it.expenseId,
+                    description = it.description,
+                    amount = it.amount,
+                    date = LocalDate.ofEpochDay(it.dateValue),
+                    category = Category(id = it.expenseCategoryId, name = "", color = Color.Transparent) // Dummy category
+                )
+            }
+        }
+    }
+
+    override suspend fun deleteAllExpenses() {
+        dao.deleteAllExpenses()
+    }
 }
 
 // --- Mapper Functions ---
+
+private fun Expense.toEntityWithId(): ExpenseEntity {
+    return ExpenseEntity(
+        expenseId = this.id,
+        description = this.description,
+        amount = this.amount,
+        dateValue = this.date.toEpochDay(),
+        expenseCategoryId = this.category.id
+    )
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun ExpenseWithCategory.toDomain(): Expense {

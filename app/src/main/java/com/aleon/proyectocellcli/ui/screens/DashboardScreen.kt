@@ -54,6 +54,7 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val expensesByDate by viewModel.expensesByDate.collectAsState()
+    val currencySymbol by viewModel.currencySymbol.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
@@ -87,7 +88,11 @@ fun DashboardScreen(
                     DateHeader(date = date)
                 }
                 items(expenses) { expense ->
-                    ExpenseItem(expense = expense)
+                    ExpenseItem(
+                        expense = expense,
+                        currencySymbol = currencySymbol,
+                        onDelete = { viewModel.onDeleteExpense(expense) }
+                    )
                 }
             }
         }
@@ -115,7 +120,11 @@ fun DateHeader(date: LocalDate) {
 }
 
 @Composable
-fun ExpenseItem(expense: Expense) {
+fun ExpenseItem(
+    expense: Expense,
+    currencySymbol: String,
+    onDelete: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
@@ -145,7 +154,7 @@ fun ExpenseItem(expense: Expense) {
                 }
             }
             Text(
-                text = "$${"%.2f".format(expense.amount)}",
+                text = "$currencySymbol${"%.2f".format(expense.amount)}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -154,7 +163,7 @@ fun ExpenseItem(expense: Expense) {
                 IconButton(onClick = { /* TODO: Edit logic */ }) {
                     Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Gasto")
                 }
-                IconButton(onClick = { /* TODO: Delete logic */ }) {
+                IconButton(onClick = onDelete) {
                     Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar Gasto")
                 }
             }

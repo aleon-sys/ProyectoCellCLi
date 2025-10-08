@@ -24,10 +24,11 @@ fun SettingsScreen(
 ) {
     val selectedTheme by viewModel.theme.collectAsState()
     val selectedCurrency by viewModel.currency.collectAsState()
+    val monthlyLimit by viewModel.monthlyLimit.collectAsState()
     
-    var monthlyLimit by remember { mutableStateOf("") } // This remains local for now
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
+    var showMonthlyLimitDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -63,13 +64,11 @@ fun SettingsScreen(
 
         // --- Monthly Limit ---
         SettingSection(title = "Límite Mensual") {
-            OutlinedTextField(
-                value = monthlyLimit,
-                onValueChange = { monthlyLimit = it },
-                label = { Text("Establecer límite de gastos") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                leadingIcon = { Text(selectedCurrency.substringAfter("(").substringBefore(")")) },
-                modifier = Modifier.fillMaxWidth()
+            val currencySymbol = selectedCurrency.substringAfter("(").substringBefore(")")
+            SettingItem(
+                title = "Establecer límite de gastos",
+                subtitle = if (monthlyLimit > 0) "$currencySymbol${"%.2f".format(monthlyLimit)}" else "No establecido",
+                onClick = { showMonthlyLimitDialog = true }
             )
         }
 
@@ -91,7 +90,7 @@ fun SettingsScreen(
     if (showDeleteConfirmation) {
         DeleteConfirmationDialog(
             onConfirm = {
-                // TODO: Add logic to delete all data
+                viewModel.onDeleteAllExpenses()
                 showDeleteConfirmation = false
             },
             onDismiss = { showDeleteConfirmation = false }
@@ -105,6 +104,17 @@ fun SettingsScreen(
                 showCurrencyDialog = false
             },
             onDismiss = { showCurrencyDialog = false }
+        )
+    }
+
+    if (showMonthlyLimitDialog) {
+        MonthlyLimitDialog(
+            initialValue = if (monthlyLimit > 0) monthlyLimit.toString() else "",
+            onDismiss = { showMonthlyLimitDialog = false },
+            onSave = { newLimit ->
+                viewModel.onSetMonthlyLimit(newLimit)
+                showMonthlyLimitDialog = false
+            }
         )
     }
 }
@@ -200,6 +210,38 @@ fun CurrencySelectionDialog(onCurrencySelected: (String) -> Unit, onDismiss: () 
             }
         }
     }
+}
+
+@Composable
+fun MonthlyLimitDialog(initialValue: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var text by remember { mutableStateOf(initialValue) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Establecer Límite Mensual") },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { newText ->
+                    if (newText.matches(Regex("^\\d*(\\.\\d{0,2})?\$"))) {
+                        text = newText
+                    }
+                },
+                label = { Text("Monto") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+        },
+        confirmButton = {
+            Button(onClick = { onSave(text) }) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true)

@@ -16,5 +16,11 @@ interface ExpenseRepository {
 
     suspend fun addExpense(expense: Expense)
 
+    suspend fun deleteExpense(expense: Expense)
+
     fun getExpenses(): Flow<List<Expense>>
+
+    fun getExpensesForCurrentMonth(): Flow<List<Expense>>
+
+    suspend fun deleteAllExpenses()
 }

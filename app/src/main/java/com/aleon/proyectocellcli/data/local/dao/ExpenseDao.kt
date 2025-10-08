@@ -1,6 +1,7 @@
 package com.aleon.proyectocellcli.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -17,6 +18,9 @@ interface ExpenseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExpense(expense: ExpenseEntity)
 
+    @Delete
+    suspend fun deleteExpense(expense: ExpenseEntity)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategory(category: CategoryEntity)
 
@@ -29,4 +33,10 @@ interface ExpenseDao {
     @Transaction
     @Query("SELECT * FROM expenses ORDER BY dateValue DESC")
     fun getExpensesWithCategory(): Flow<List<ExpenseWithCategory>>
+
+    @Query("SELECT * FROM expenses WHERE dateValue BETWEEN :startDate AND :endDate")
+    fun getExpensesBetweenDates(startDate: Long, endDate: Long): Flow<List<ExpenseEntity>>
+
+    @Query("DELETE FROM expenses")
+    suspend fun deleteAllExpenses()
 }

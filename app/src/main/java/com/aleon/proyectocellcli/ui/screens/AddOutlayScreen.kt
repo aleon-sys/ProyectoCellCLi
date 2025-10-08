@@ -1,6 +1,7 @@
 package com.aleon.proyectocellcli.ui.screens
 
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,14 +19,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aleon.proyectocellcli.domain.model.Category
+import com.aleon.proyectocellcli.ui.viewmodel.AddOutlayEvent
 import com.aleon.proyectocellcli.ui.viewmodel.AddOutlayViewModel
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
+import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -47,11 +51,29 @@ fun AddOutlayScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     
     val categories by viewModel.categories.collectAsState()
+    val currencySymbol by viewModel.currencySymbol.collectAsState()
     var selectedCategory by remember(categories) { mutableStateOf(categories.firstOrNull()) }
     
     var isDropdownExpanded by remember { mutableStateOf(false) }
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
     var showCategoryDialog by remember { mutableStateOf(false) }
+    var showLimitAlert by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is AddOutlayEvent.SaveSuccess -> {
+                    Toast.makeText(context, "¡Gasto guardado!", Toast.LENGTH_SHORT).show()
+                    description = ""
+                    amount = ""
+                }
+                is AddOutlayEvent.LimitExceeded -> {
+                    showLimitAlert = true
+                }
+            }
+        }
+    }
 
     // --- UI ---
     Column(
@@ -73,7 +95,7 @@ fun AddOutlayScreen(
             },
             label = { Text("Monto") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            leadingIcon = { Text("$") },
+            leadingIcon = { Text(currencySymbol) },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -159,10 +181,6 @@ fun AddOutlayScreen(
             onClick = {
                 selectedCategory?.let {
                     viewModel.onSaveExpense(description, amount, it, selectedDate)
-                    // Clear fields after saving
-                    description = ""
-                    amount = ""
-                    selectedDate = LocalDate.now()
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -207,6 +225,19 @@ fun AddOutlayScreen(
                     viewModel.onUpdateCategory(updatedCategory)
                 }
                 showCategoryDialog = false
+            }
+        )
+    }
+
+    if (showLimitAlert) {
+        AlertDialog(
+            onDismissRequest = { showLimitAlert = false },
+            title = { Text("Límite Excedido") },
+            text = { Text("Has superado tu límite de gastos mensual. El gasto se guardará de todas formas.") },
+            confirmButton = {
+                Button(onClick = { showLimitAlert = false }) {
+                    Text("Entendido")
+                }
             }
         )
     }
