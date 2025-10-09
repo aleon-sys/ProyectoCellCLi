@@ -124,36 +124,110 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 )
             }
             TimeframeType.PERIOD -> {
-                val dateRangePickerState = rememberDateRangePickerState()
-                Dialog(onDismissRequest = { showDialog = null }) {
-                    Card {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            DateRangePicker(state = dateRangePickerState)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                TextButton(onClick = { showDialog = null }) { Text("Cancelar") }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(onClick = {
-                                    dateRangePickerState.selectedStartDateMillis?.let { startMillis ->
-                                        dateRangePickerState.selectedEndDateMillis?.let { endMillis ->
-                                            val startDate = Instant.ofEpochMilli(startMillis).atZone(ZoneOffset.UTC).toLocalDate()
-                                            val endDate = Instant.ofEpochMilli(endMillis).atZone(ZoneOffset.UTC).toLocalDate()
-                                            val formatter = DateTimeFormatter.ofPattern("dd/MM/yy")
-                                            selectedDateText = "${startDate.format(formatter)} - ${endDate.format(formatter)}"
-                                            activeFilter = TimeframeType.PERIOD
-                                        }
-                                    }
-                                    showDialog = null
-                                }) { Text("Aceptar") }
+                PeriodPickerDialog(
+                    onDismiss = { showDialog = null },
+                    onPeriodSelected = { startDate, endDate ->
+                        val formatter = DateTimeFormatter.ofPattern("dd/MM/yy")
+                        selectedDateText = "${startDate.format(formatter)} - ${endDate.format(formatter)}"
+                        activeFilter = TimeframeType.PERIOD
+                        showDialog = null
+                    }
+                )
+            }
+            else -> {}
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PeriodPickerDialog(
+    onDismiss: () -> Unit,
+    onPeriodSelected: (startDate: LocalDate, endDate: LocalDate) -> Unit
+) {
+    var startDate by remember { mutableStateOf<LocalDate?>(null) }
+    var endDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var isPickingStartDate by remember { mutableStateOf(true) }
+
+    val formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy")
+
+    // This is the main dialog for the period selection
+    Dialog(onDismissRequest = onDismiss) {
+        Card {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Seleccionar Periodo", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Clickable field for Start Date
+                Box {
+                    OutlinedTextField(
+                        value = startDate?.format(formatter) ?: "Fecha de Inicio",
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Box(modifier = Modifier.matchParentSize().clickable {
+                        isPickingStartDate = true
+                        showDatePicker = true
+                    })
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Clickable field for End Date
+                Box {
+                    OutlinedTextField(
+                        value = endDate?.format(formatter) ?: "Fecha de Fin",
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Box(modifier = Modifier.matchParentSize().clickable {
+                        isPickingStartDate = false
+                        showDatePicker = true
+                    })
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Action Buttons
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            if (startDate != null && endDate != null) {
+                                onPeriodSelected(startDate!!, endDate!!)
                             }
-                        }
+                        },
+                        enabled = startDate != null && endDate != null
+                    ) {
+                        Text("Aceptar")
                     }
                 }
             }
-            else -> {}
+        }
+    }
+
+    // This is the reusable DatePickerDialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+                        if (isPickingStartDate) {
+                            startDate = selectedDate
+                        } else {
+                            endDate = selectedDate
+                        }
+                    }
+                    showDatePicker = false
+                }) { Text("Aceptar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }
