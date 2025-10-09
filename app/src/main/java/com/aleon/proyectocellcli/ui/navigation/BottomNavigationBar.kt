@@ -40,7 +40,7 @@ fun BottomNavigationBar(navController: NavController) {
             route = Screen.OutlayScreen.route
         ),
         BottomNavItem(
-            label = "Ajustes",
+            label = "Settings",
             icon = Icons.Filled.Settings,
             route = Screen.SettingsScreen.route
         )
