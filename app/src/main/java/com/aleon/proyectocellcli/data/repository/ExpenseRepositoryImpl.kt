@@ -34,7 +34,7 @@ class ExpenseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteCategory(category: Category) {
-        // TODO: Implement in DAO
+        dao.deleteCategory(category.toEntity())
     }
 
     override suspend fun updateCategory(category: Category) {

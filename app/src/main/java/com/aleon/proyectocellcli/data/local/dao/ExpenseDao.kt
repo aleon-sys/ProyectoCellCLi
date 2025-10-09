@@ -27,6 +27,9 @@ interface ExpenseDao {
     @Update
     suspend fun updateCategory(category: CategoryEntity)
 
+    @Delete
+    suspend fun deleteCategory(category: CategoryEntity)
+
     @Query("SELECT * FROM categories ORDER BY name ASC")
     fun getAllCategories(): Flow<List<CategoryEntity>>
 

@@ -32,6 +32,7 @@ class AddOutlayViewModel @Inject constructor(
     private val addCategoryUseCase: AddCategoryUseCase,
     private val addExpenseUseCase: AddExpenseUseCase,
     private val updateCategoryUseCase: UpdateCategoryUseCase,
+    private val deleteCategoryUseCase: DeleteCategoryUseCase,
     private val getExpenseByIdUseCase: GetExpenseByIdUseCase,
     private val updateExpenseUseCase: UpdateExpenseUseCase,
     getCurrencyUseCase: GetCurrencyUseCase,
@@ -144,5 +145,9 @@ class AddOutlayViewModel @Inject constructor(
 
     fun onUpdateCategory(category: Category) {
         viewModelScope.launch { updateCategoryUseCase(category) }
+    }
+
+    fun onDeleteCategory(category: Category) {
+        viewModelScope.launch { deleteCategoryUseCase(category) }
     }
 }
