@@ -16,31 +16,56 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = GreenDarkPrimary,
+    onPrimary = GreenDarkOnPrimary,
+    primaryContainer = GreenDarkPrimaryContainer,
+    onPrimaryContainer = GreenDarkOnPrimaryContainer,
+    secondary = GreenDarkSecondary,
+    onSecondary = GreenDarkOnSecondary,
+    secondaryContainer = GreenDarkSecondaryContainer,
+    onSecondaryContainer = GreenDarkOnSecondaryContainer,
+    tertiary = GreenDarkTertiary,
+    onTertiary = GreenDarkOnTertiary,
+    tertiaryContainer = GreenDarkTertiaryContainer,
+    onTertiaryContainer = GreenDarkOnTertiaryContainer,
+    error = GreenDarkError,
+    onError = GreenDarkOnError,
+    errorContainer = GreenDarkErrorContainer,
+    onErrorContainer = GreenDarkOnErrorContainer,
+    background = GreenDarkBackground,
+    onBackground = GreenDarkOnBackground,
+    surface = GreenDarkSurface,
+    onSurface = GreenDarkOnSurface
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = GreenPrimary,
+    onPrimary = GreenOnPrimary,
+    primaryContainer = GreenPrimaryContainer,
+    onPrimaryContainer = GreenOnPrimaryContainer,
+    secondary = GreenSecondary,
+    onSecondary = GreenOnSecondary,
+    secondaryContainer = GreenSecondaryContainer,
+    onSecondaryContainer = GreenOnSecondaryContainer,
+    tertiary = GreenTertiary,
+    onTertiary = GreenOnTertiary,
+    tertiaryContainer = GreenTertiaryContainer,
+    onTertiaryContainer = GreenOnTertiaryContainer,
+    error = GreenError,
+    onError = GreenOnError,
+    errorContainer = GreenErrorContainer,
+    onErrorContainer = GreenOnErrorContainer,
+    background = GreenBackground,
+    onBackground = GreenOnBackground,
+    surface = GreenSurface,
+    onSurface = GreenOnSurface
 )
 
 @Composable
 fun ProyectocellcliTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
