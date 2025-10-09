@@ -1,10 +1,12 @@
 package com.aleon.proyectocellcli.ui.screens
 
 import android.graphics.Color as AndroidColor
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -20,6 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.aleon.proyectocellcli.ui.viewmodel.CategoryTotal
+import com.aleon.proyectocellcli.ui.viewmodel.HomeViewModel
+import com.aleon.proyectocellcli.ui.viewmodel.Timeframe
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.data.PieData
@@ -32,24 +38,14 @@ import java.time.Month
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
+import java.util.*
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.CircleShape
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.aleon.proyectocellcli.ui.viewmodel.CategoryTotal
-import com.aleon.proyectocellcli.ui.viewmodel.HomeViewModel
-import com.aleon.proyectocellcli.ui.viewmodel.Timeframe
-
-
-// This class formats the value on the chart slice into a percentage string
 private class PercentageFormatter : ValueFormatter() {
     override fun getPieLabel(value: Float, pieEntry: PieEntry?): String {
         return "${value.toInt()}%"
     }
 }
 
-// Main Composable for the Home Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -78,7 +74,6 @@ fun HomeScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // --- Date Filter Section ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -95,16 +90,14 @@ fun HomeScreen(
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(16.dp))
-
-        // --- Chart Section ---
-        ChartCard(categoryTotals = uiState)
+        ChartCard(categoryTotals = uiState.categoryTotals)
         Spacer(modifier = Modifier.height(16.dp))
-        
-        // --- Totals List Section ---
-        CategoryTotalsList(categoryTotals = uiState)
+        CategoryTotalsList(
+            categoryTotals = uiState.categoryTotals,
+            currencySymbol = uiState.currencySymbol
+        )
     }
 
-    // --- Dialogs ---
     if (showDialog != null) {
         when (showDialog) {
             Timeframe.DAY -> {
@@ -163,7 +156,6 @@ private fun TimeframeButton(text: String, isSelected: Boolean, onClick: () -> Un
     }
 }
 
-// 1. Composable for the Donut Chart - NOW DYNAMIC
 @Composable
 fun ChartCard(categoryTotals: List<CategoryTotal>) {
     val valueTextColor = MaterialTheme.colorScheme.onSurface.toArgb()
@@ -196,13 +188,12 @@ fun ChartCard(categoryTotals: List<CategoryTotal>) {
                     }
                 },
                 update = { chart ->
-                    // Calculate total amount to find percentages
                     val totalAmount = categoryTotals.sumOf { it.amount }.toFloat()
                     if (totalAmount == 0f) return@AndroidView
 
                     val entries = categoryTotals
                         .filter { it.amount > 0 }
-                        .map { PieEntry((it.amount.toFloat() / totalAmount * 100), it.name) }
+                        .map { PieEntry(it.amount.toFloat() / totalAmount * 100, it.name) }
                     
                     val colors = categoryTotals
                         .filter { it.amount > 0 }
@@ -210,7 +201,7 @@ fun ChartCard(categoryTotals: List<CategoryTotal>) {
 
                     val dataSet = PieDataSet(entries, "").apply {
                         this.colors = colors
-                        this.valueFormatter = PercentageFormatter() // Now receives a percentage
+                        this.valueFormatter = PercentageFormatter()
                         this.valueTextSize = 12f
                         this.valueTextColor = valueTextColor
                     }
@@ -224,11 +215,13 @@ fun ChartCard(categoryTotals: List<CategoryTotal>) {
     }
 }
 
-// 3. Composable for the list of category totals
 @Composable
-fun CategoryTotalsList(categoryTotals: List<CategoryTotal>) {
+fun CategoryTotalsList(
+    categoryTotals: List<CategoryTotal>,
+    currencySymbol: String
+) {
     if (categoryTotals.all { it.amount == 0.0 }) {
-        // Handled by the ChartCard's empty message
+        // Empty state is handled by ChartCard
     } else {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
@@ -242,14 +235,20 @@ fun CategoryTotalsList(categoryTotals: List<CategoryTotal>) {
                 )
             }
             items(categoryTotals.filter { it.amount > 0 }) { categoryTotal ->
-                CategoryTotalItem(categoryTotal = categoryTotal)
+                CategoryTotalItem(
+                    categoryTotal = categoryTotal,
+                    currencySymbol = currencySymbol
+                )
             }
         }
     }
 }
 
 @Composable
-fun CategoryTotalItem(categoryTotal: CategoryTotal) {
+fun CategoryTotalItem(
+    categoryTotal: CategoryTotal,
+    currencySymbol: String
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
@@ -271,7 +270,7 @@ fun CategoryTotalItem(categoryTotal: CategoryTotal) {
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "$${"%.2f".format(categoryTotal.amount)}",
+                text = "$currencySymbol${"%.2f".format(categoryTotal.amount)}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 18.sp
@@ -397,5 +396,5 @@ private fun YearPickerDialog(onDismiss: () -> Unit, onYearSelected: (Int) -> Uni
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    // HomeScreen() // Preview won't work easily with Hilt ViewModel
+    // Preview won't work easily with Hilt ViewModel
 }

@@ -3,6 +3,7 @@ package com.aleon.proyectocellcli.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aleon.proyectocellcli.domain.use_case.GetCategoriesUseCase
+import com.aleon.proyectocellcli.domain.use_case.GetCurrencyUseCase
 import com.aleon.proyectocellcli.domain.use_case.GetExpensesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -15,6 +16,12 @@ data class CategoryTotal(
     val name: String,
     val amount: Double,
     val color: androidx.compose.ui.graphics.Color
+)
+
+// New unified UI state class
+data class HomeScreenState(
+    val categoryTotals: List<CategoryTotal> = emptyList(),
+    val currencySymbol: String = "$"
 )
 
 // Enum to represent the type of filter active
@@ -30,17 +37,19 @@ data class DateFilterState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     getExpensesUseCase: GetExpensesUseCase,
-    getCategoriesUseCase: GetCategoriesUseCase
+    getCategoriesUseCase: GetCategoriesUseCase,
+    getCurrencyUseCase: GetCurrencyUseCase
 ) : ViewModel() {
 
     private val _dateFilterState = MutableStateFlow(DateFilterState())
     val dateFilterState: StateFlow<DateFilterState> = _dateFilterState.asStateFlow()
 
-    val uiState: StateFlow<List<CategoryTotal>> = combine(
+    val uiState: StateFlow<HomeScreenState> = combine(
         getExpensesUseCase(),
         getCategoriesUseCase(),
-        _dateFilterState
-    ) { expenses, categories, filter ->
+        _dateFilterState,
+        getCurrencyUseCase()
+    ) { expenses, categories, filter, currencyPref ->
         val filteredExpenses = when (filter.timeframe) {
             Timeframe.DAY -> expenses.filter { it.date == filter.startDate }
             Timeframe.MONTH -> expenses.filter { it.date.year == filter.startDate.year && it.date.month == filter.startDate.month }
@@ -53,17 +62,22 @@ class HomeViewModel @Inject constructor(
         val expenseMap = filteredExpenses.groupBy { it.category.id }
             .mapValues { (_, expenseList) -> expenseList.sumOf { it.amount } }
 
-        categories.map { category ->
+        val categoryTotals = categories.map { category ->
             CategoryTotal(
                 name = category.name,
                 amount = expenseMap[category.id] ?: 0.0,
                 color = category.color
             )
         }
+        
+        val currencySymbol = currencyPref.substringAfter("(").substringBefore(")")
+        
+        HomeScreenState(categoryTotals = categoryTotals, currencySymbol = currencySymbol)
+
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
+        initialValue = HomeScreenState()
     )
 
     fun onDateSelected(date: LocalDate) {
