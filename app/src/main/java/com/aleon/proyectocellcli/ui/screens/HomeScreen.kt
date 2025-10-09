@@ -166,8 +166,6 @@ private fun TimeframeButton(text: String, isSelected: Boolean, onClick: () -> Un
 // 1. Composable for the Donut Chart - NOW DYNAMIC
 @Composable
 fun ChartCard(categoryTotals: List<CategoryTotal>) {
-    val totalAmount = categoryTotals.sumOf { it.amount }.toFloat()
-    val colors = categoryTotals.map { it.color.toArgb() }
     val valueTextColor = MaterialTheme.colorScheme.onSurface.toArgb()
 
     Card(
@@ -176,7 +174,7 @@ fun ChartCard(categoryTotals: List<CategoryTotal>) {
             .fillMaxHeight(0.5f),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        if (categoryTotals.isEmpty() || totalAmount == 0f) {
+        if (categoryTotals.all { it.amount == 0.0 }) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No hay gastos para este periodo", textAlign = TextAlign.Center)
             }
@@ -198,13 +196,21 @@ fun ChartCard(categoryTotals: List<CategoryTotal>) {
                     }
                 },
                 update = { chart ->
+                    // Calculate total amount to find percentages
+                    val totalAmount = categoryTotals.sumOf { it.amount }.toFloat()
+                    if (totalAmount == 0f) return@AndroidView
+
                     val entries = categoryTotals
                         .filter { it.amount > 0 }
-                        .map { PieEntry((it.amount / totalAmount * 100).toFloat(), it.name) }
+                        .map { PieEntry((it.amount.toFloat() / totalAmount * 100), it.name) }
                     
+                    val colors = categoryTotals
+                        .filter { it.amount > 0 }
+                        .map { it.color.toArgb() }
+
                     val dataSet = PieDataSet(entries, "").apply {
                         this.colors = colors
-                        this.valueFormatter = PercentageFormatter()
+                        this.valueFormatter = PercentageFormatter() // Now receives a percentage
                         this.valueTextSize = 12f
                         this.valueTextColor = valueTextColor
                     }
@@ -221,7 +227,7 @@ fun ChartCard(categoryTotals: List<CategoryTotal>) {
 // 3. Composable for the list of category totals
 @Composable
 fun CategoryTotalsList(categoryTotals: List<CategoryTotal>) {
-    if (categoryTotals.isEmpty() || categoryTotals.all { it.amount == 0.0 }) {
+    if (categoryTotals.all { it.amount == 0.0 }) {
         // Handled by the ChartCard's empty message
     } else {
         LazyColumn(
