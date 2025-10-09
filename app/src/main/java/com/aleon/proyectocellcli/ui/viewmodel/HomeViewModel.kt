@@ -7,6 +7,7 @@ import com.aleon.proyectocellcli.domain.use_case.GetExpensesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import java.time.LocalDate
+import java.time.Month
 import javax.inject.Inject
 
 // Data class to hold the final calculated data for the UI
@@ -16,31 +17,42 @@ data class CategoryTotal(
     val color: androidx.compose.ui.graphics.Color
 )
 
+// Enum to represent the type of filter active
+enum class Timeframe { DAY, MONTH, YEAR, PERIOD }
+
+// Data class to hold the complete filter state
+data class DateFilterState(
+    val timeframe: Timeframe = Timeframe.MONTH,
+    val startDate: LocalDate = LocalDate.now(),
+    val endDate: LocalDate? = null
+)
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     getExpensesUseCase: GetExpensesUseCase,
     getCategoriesUseCase: GetCategoriesUseCase
 ) : ViewModel() {
 
-    // StateFlow to hold the currently selected date for filtering
-    private val _selectedDate = MutableStateFlow(LocalDate.now())
-    val selectedDate: StateFlow<LocalDate> = _selectedDate.asStateFlow()
+    private val _dateFilterState = MutableStateFlow(DateFilterState())
+    val dateFilterState: StateFlow<DateFilterState> = _dateFilterState.asStateFlow()
 
-    // The final UI state, which reacts to changes in expenses, categories, AND the selected date
     val uiState: StateFlow<List<CategoryTotal>> = combine(
         getExpensesUseCase(),
         getCategoriesUseCase(),
-        _selectedDate
-    ) { expenses, categories, date ->
-        // Filter expenses for the selected date first
-        val filteredExpenses = expenses.filter { it.date == date }
+        _dateFilterState
+    ) { expenses, categories, filter ->
+        val filteredExpenses = when (filter.timeframe) {
+            Timeframe.DAY -> expenses.filter { it.date == filter.startDate }
+            Timeframe.MONTH -> expenses.filter { it.date.year == filter.startDate.year && it.date.month == filter.startDate.month }
+            Timeframe.YEAR -> expenses.filter { it.date.year == filter.startDate.year }
+            Timeframe.PERIOD -> expenses.filter { expense ->
+                !expense.date.isBefore(filter.startDate) && !expense.date.isAfter(filter.endDate!!)
+            }
+        }
 
-        // Group filtered expenses by category ID and sum their amounts
         val expenseMap = filteredExpenses.groupBy { it.category.id }
             .mapValues { (_, expenseList) -> expenseList.sumOf { it.amount } }
 
-        // Create the final list, including all categories
-        // We can decide if we want to show categories with 0 expense for that day
         categories.map { category ->
             CategoryTotal(
                 name = category.name,
@@ -54,8 +66,19 @@ class HomeViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
-    // Function to be called from the UI when the user selects a new date
-    fun onDateSelected(newDate: LocalDate) {
-        _selectedDate.value = newDate
+    fun onDateSelected(date: LocalDate) {
+        _dateFilterState.value = DateFilterState(timeframe = Timeframe.DAY, startDate = date)
+    }
+
+    fun onMonthSelected(month: Month, year: Int) {
+        _dateFilterState.value = DateFilterState(timeframe = Timeframe.MONTH, startDate = LocalDate.of(year, month, 1))
+    }
+
+    fun onYearSelected(year: Int) {
+        _dateFilterState.value = DateFilterState(timeframe = Timeframe.YEAR, startDate = LocalDate.of(year, 1, 1))
+    }
+
+    fun onPeriodSelected(startDate: LocalDate, endDate: LocalDate) {
+        _dateFilterState.value = DateFilterState(timeframe = Timeframe.PERIOD, startDate = startDate, endDate = endDate)
     }
 }

@@ -28,14 +28,18 @@ import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
 import java.time.Instant
 import java.time.LocalDate
+import java.time.Month
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aleon.proyectocellcli.ui.viewmodel.CategoryTotal
 import com.aleon.proyectocellcli.ui.viewmodel.HomeViewModel
+import com.aleon.proyectocellcli.ui.viewmodel.Timeframe
 
 
 // This class formats the value on the chart slice into a percentage string
@@ -45,10 +49,6 @@ private class PercentageFormatter : ValueFormatter() {
     }
 }
 
-private enum class TimeframeType {
-    DAY, MONTH, YEAR, PERIOD
-}
-
 // Main Composable for the Home Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,14 +56,21 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val categoryTotals by viewModel.uiState.collectAsState()
-    val selectedDate by viewModel.selectedDate.collectAsState()
-    
-    var activeFilter by remember { mutableStateOf(TimeframeType.DAY) }
-    var showDialog by remember { mutableStateOf<TimeframeType?>(null) }
-    
-    val dateFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy")
-    val selectedDateText = selectedDate.format(dateFormatter)
+    val uiState by viewModel.uiState.collectAsState()
+    val filterState by viewModel.dateFilterState.collectAsState()
+    var showDialog by remember { mutableStateOf<Timeframe?>(null) }
+
+    val selectedDateText = remember(filterState) {
+        when (filterState.timeframe) {
+            Timeframe.DAY -> filterState.startDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
+            Timeframe.MONTH -> "${filterState.startDate.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() }} ${filterState.startDate.year}"
+            Timeframe.YEAR -> filterState.startDate.year.toString()
+            Timeframe.PERIOD -> {
+                val formatter = DateTimeFormatter.ofPattern("dd/MM/yy")
+                "${filterState.startDate.format(formatter)} - ${filterState.endDate?.format(formatter)}"
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -76,10 +83,10 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            TimeframeButton("Día", activeFilter == TimeframeType.DAY) { showDialog = TimeframeType.DAY }
-            TimeframeButton("Mes", activeFilter == TimeframeType.MONTH) { /* TODO */ }
-            TimeframeButton("Año", activeFilter == TimeframeType.YEAR) { /* TODO */ }
-            TimeframeButton("Periodo", activeFilter == TimeframeType.PERIOD) { /* TODO */ }
+            TimeframeButton("Día", filterState.timeframe == Timeframe.DAY) { showDialog = Timeframe.DAY }
+            TimeframeButton("Mes", filterState.timeframe == Timeframe.MONTH) { showDialog = Timeframe.MONTH }
+            TimeframeButton("Año", filterState.timeframe == Timeframe.YEAR) { showDialog = Timeframe.YEAR }
+            TimeframeButton("Periodo", filterState.timeframe == Timeframe.PERIOD) { showDialog = Timeframe.PERIOD }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -90,30 +97,62 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // --- Chart Section ---
-        ChartCard(categoryTotals = categoryTotals)
+        ChartCard(categoryTotals = uiState)
         Spacer(modifier = Modifier.height(16.dp))
         
         // --- Totals List Section ---
-        CategoryTotalsList(categoryTotals = categoryTotals)
+        CategoryTotalsList(categoryTotals = uiState)
     }
 
     // --- Dialogs ---
-    if (showDialog == TimeframeType.DAY) {
-        val datePickerState = rememberDatePickerState()
-        DatePickerDialog(
-            onDismissRequest = { showDialog = null },
-            confirmButton = {
-                Button(onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        val newDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
-                        viewModel.onDateSelected(newDate)
+    if (showDialog != null) {
+        when (showDialog) {
+            Timeframe.DAY -> {
+                val datePickerState = rememberDatePickerState()
+                DatePickerDialog(
+                    onDismissRequest = { showDialog = null },
+                    confirmButton = {
+                        Button(onClick = {
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                val newDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+                                viewModel.onDateSelected(newDate)
+                            }
+                            showDialog = null
+                        }) { Text("Aceptar") }
                     }
-                    showDialog = null
-                }) { Text("Aceptar") }
+                ) { DatePicker(state = datePickerState) }
             }
-        ) { DatePicker(state = datePickerState) }
+            Timeframe.MONTH -> {
+                MonthPickerDialog(
+                    onDismiss = { showDialog = null },
+                    onMonthSelected = { month, year ->
+                        viewModel.onMonthSelected(month, year)
+                        showDialog = null
+                    }
+                )
+            }
+            Timeframe.YEAR -> {
+                YearPickerDialog(
+                    onDismiss = { showDialog = null },
+                    onYearSelected = { year ->
+                        viewModel.onYearSelected(year)
+                        showDialog = null
+                    }
+                )
+            }
+            Timeframe.PERIOD -> {
+                PeriodPickerDialog(
+                    onDismiss = { showDialog = null },
+                    onPeriodSelected = { startDate, endDate ->
+                        viewModel.onPeriodSelected(startDate, endDate)
+                        showDialog = null
+                    }
+                )
+            }
+
+            null -> TODO()
+        }
     }
-    // TODO: Implement other dialogs
 }
 
 @Composable
@@ -129,7 +168,7 @@ private fun TimeframeButton(text: String, isSelected: Boolean, onClick: () -> Un
 fun ChartCard(categoryTotals: List<CategoryTotal>) {
     val totalAmount = categoryTotals.sumOf { it.amount }.toFloat()
     val colors = categoryTotals.map { it.color.toArgb() }
-    val valueTextColor = MaterialTheme.colorScheme.onSurface.toArgb() // Read color in Composable scope
+    val valueTextColor = MaterialTheme.colorScheme.onSurface.toArgb()
 
     Card(
         modifier = Modifier
@@ -139,7 +178,7 @@ fun ChartCard(categoryTotals: List<CategoryTotal>) {
     ) {
         if (categoryTotals.isEmpty() || totalAmount == 0f) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No hay gastos para este día", textAlign = TextAlign.Center)
+                Text("No hay gastos para este periodo", textAlign = TextAlign.Center)
             }
         } else {
             AndroidView(
@@ -159,12 +198,15 @@ fun ChartCard(categoryTotals: List<CategoryTotal>) {
                     }
                 },
                 update = { chart ->
-                    val entries = categoryTotals.map { PieEntry((it.amount / totalAmount * 100).toFloat(), it.name) }
+                    val entries = categoryTotals
+                        .filter { it.amount > 0 }
+                        .map { PieEntry((it.amount / totalAmount * 100).toFloat(), it.name) }
+                    
                     val dataSet = PieDataSet(entries, "").apply {
                         this.colors = colors
                         this.valueFormatter = PercentageFormatter()
                         this.valueTextSize = 12f
-                        this.valueTextColor = valueTextColor // Use the variable here
+                        this.valueTextColor = valueTextColor
                     }
                     val pieData = PieData(dataSet)
                     chart.data = pieData
@@ -180,7 +222,7 @@ fun ChartCard(categoryTotals: List<CategoryTotal>) {
 @Composable
 fun CategoryTotalsList(categoryTotals: List<CategoryTotal>) {
     if (categoryTotals.isEmpty() || categoryTotals.all { it.amount == 0.0 }) {
-        // You can show a message here as well if you want, or just an empty space.
+        // Handled by the ChartCard's empty message
     } else {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
@@ -232,11 +274,122 @@ fun CategoryTotalItem(categoryTotal: CategoryTotal) {
     }
 }
 
-// Previews might need adjustments to work with ViewModels,
-// but the core logic is now in place.
+@Composable
+private fun MonthPickerDialog(onDismiss: () -> Unit, onMonthSelected: (month: Month, year: Int) -> Unit) {
+    val currentYear = LocalDate.now().year
+    var year by remember { mutableStateOf(currentYear) }
+    val months = Month.values()
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                ) {
+                    IconButton(onClick = { year-- }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null) }
+                    Text(text = year.toString(), style = MaterialTheme.typography.titleMedium)
+                    IconButton(onClick = { year++ }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
+                }
+                LazyColumn(modifier = Modifier.padding(vertical = 16.dp)) {
+                    items(months) { month ->
+                        Text(
+                            text = month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onMonthSelected(month, year) }
+                                .padding(horizontal = 32.dp, vertical = 12.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PeriodPickerDialog(
+    onDismiss: () -> Unit,
+    onPeriodSelected: (startDate: LocalDate, endDate: LocalDate) -> Unit
+) {
+    var startDate by remember { mutableStateOf<LocalDate?>(null) }
+    var endDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var isPickingStartDate by remember { mutableStateOf(true) }
+
+    val formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy")
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Seleccionar Periodo", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(24.dp))
+                Box {
+                    OutlinedTextField(value = startDate?.format(formatter) ?: "Fecha de Inicio", onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth())
+                    Box(modifier = Modifier.matchParentSize().clickable { isPickingStartDate = true; showDatePicker = true })
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Box {
+                    OutlinedTextField(value = endDate?.format(formatter) ?: "Fecha de Fin", onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth())
+                    Box(modifier = Modifier.matchParentSize().clickable { isPickingStartDate = false; showDatePicker = true })
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = { if (startDate != null && endDate != null) { onPeriodSelected(startDate!!, endDate!!) } },
+                        enabled = startDate != null && endDate != null
+                    ) { Text("Aceptar") }
+                }
+            }
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+                        if (isPickingStartDate) startDate = selectedDate else endDate = selectedDate
+                    }
+                    showDatePicker = false
+                }) { Text("Aceptar") }
+            }
+        ) { DatePicker(state = datePickerState) }
+    }
+}
+
+@Composable
+private fun YearPickerDialog(onDismiss: () -> Unit, onYearSelected: (Int) -> Unit) {
+    var year by remember { mutableStateOf(LocalDate.now().year) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    IconButton(onClick = { year-- }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null) }
+                    Text(text = year.toString(), style = MaterialTheme.typography.headlineMedium)
+                    IconButton(onClick = { year++ }) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = { onYearSelected(year) }) { Text("Aceptar") }
+            }
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    // This preview will show the empty state
-    // HomeScreen() 
+    // HomeScreen() // Preview won't work easily with Hilt ViewModel
 }
