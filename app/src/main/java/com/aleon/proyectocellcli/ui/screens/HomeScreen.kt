@@ -30,8 +30,12 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-// Data class for the list items
-data class CategoryTotal(val name: String, val amount: Double)
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.aleon.proyectocellcli.domain.model.Category
+import com.aleon.proyectocellcli.ui.viewmodel.HomeViewModel
+
 
 // This class formats the value on the chart slice into a percentage string
 private class PercentageFormatter : ValueFormatter() {
@@ -47,7 +51,11 @@ private enum class TimeframeType {
 // Main Composable for the Home Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = hiltViewModel()
+) {
+    val categories by viewModel.categories.collectAsState()
     var activeFilter by remember { mutableStateOf(TimeframeType.MONTH) }
     var showDialog by remember { mutableStateOf<TimeframeType?>(null) }
     var selectedDateText by remember { mutableStateOf("Octubre 2025") }
@@ -81,7 +89,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
         
         // --- Totals List Section ---
-        CategoryTotalsList()
+        CategoryTotalsList(categories = categories)
     }
 
     // --- Dialogs ---
@@ -304,17 +312,7 @@ fun ChartCard() {
 
 // 3. Composable for the list of category totals
 @Composable
-fun CategoryTotalsList() {
-    val sampleCategories = remember {
-        listOf(
-            CategoryTotal("Comida", 450.75),
-            CategoryTotal("Transporte", 120.50),
-            CategoryTotal("Ocio", 85.00),
-            CategoryTotal("Hogar", 320.00),
-            CategoryTotal("Salud", 50.25)
-        )
-    }
-
+fun CategoryTotalsList(categories: List<Category>) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -326,14 +324,14 @@ fun CategoryTotalsList() {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
-        items(sampleCategories) { category ->
+        items(categories) { category ->
             CategoryTotalItem(category = category)
         }
     }
 }
 
 @Composable
-fun CategoryTotalItem(category: CategoryTotal) {
+fun CategoryTotalItem(category: Category) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
@@ -342,6 +340,12 @@ fun CategoryTotalItem(category: CategoryTotal) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .background(category.color, shape = CircleShape)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = category.name,
                 style = MaterialTheme.typography.bodyLarge,
@@ -349,7 +353,7 @@ fun CategoryTotalItem(category: CategoryTotal) {
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "$${"%.2f".format(category.amount)}",
+                text = "$0.00",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 18.sp
