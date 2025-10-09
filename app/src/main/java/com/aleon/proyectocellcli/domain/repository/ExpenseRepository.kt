@@ -27,4 +27,6 @@ interface ExpenseRepository {
     suspend fun getExpenseById(id: Int): Expense?
 
     suspend fun updateExpense(expense: Expense)
+
+    suspend fun getExpenseCountForCategory(categoryId: String): Int
 }

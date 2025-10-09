@@ -26,6 +26,12 @@ sealed class AddOutlayEvent {
     object LimitExceeded : AddOutlayEvent()
 }
 
+data class DeleteCategoryDialogState(
+    val isVisible: Boolean = false,
+    val categoryToDelete: Category? = null,
+    val relatedExpensesCount: Int = 0
+)
+
 @HiltViewModel
 class AddOutlayViewModel @Inject constructor(
     private val getCategoriesUseCase: GetCategoriesUseCase,
@@ -33,6 +39,7 @@ class AddOutlayViewModel @Inject constructor(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val updateCategoryUseCase: UpdateCategoryUseCase,
     private val deleteCategoryUseCase: DeleteCategoryUseCase,
+    private val getExpenseCountForCategoryUseCase: GetExpenseCountForCategoryUseCase,
     private val getExpenseByIdUseCase: GetExpenseByIdUseCase,
     private val updateExpenseUseCase: UpdateExpenseUseCase,
     getCurrencyUseCase: GetCurrencyUseCase,
@@ -49,8 +56,10 @@ class AddOutlayViewModel @Inject constructor(
 
     private val _eventFlow = MutableSharedFlow<AddOutlayEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
+
+    private val _deleteDialogState = MutableStateFlow(DeleteCategoryDialogState())
+    val deleteDialogState = _deleteDialogState.asStateFlow()
     
-    // Other states remain the same...
     val currencySymbol = getCurrencyUseCase().map { it.substringAfter("(").substringBefore(")") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "$")
 
@@ -114,7 +123,7 @@ class AddOutlayViewModel @Inject constructor(
         val currentState = _formState.value
         val amountDouble = currentState.amount.toDoubleOrNull()
         if (currentState.description.isBlank() || amountDouble == null || amountDouble <= 0 || currentState.category == null) {
-            return // Basic validation
+            return
         }
 
         if (monthlyLimit.value > 0 && (totalMonthlyExpenses.value + amountDouble > monthlyLimit.value)) {
@@ -148,6 +157,26 @@ class AddOutlayViewModel @Inject constructor(
     }
 
     fun onDeleteCategory(category: Category) {
-        viewModelScope.launch { deleteCategoryUseCase(category) }
+        viewModelScope.launch {
+            val count = getExpenseCountForCategoryUseCase(category.id)
+            _deleteDialogState.value = DeleteCategoryDialogState(
+                isVisible = true,
+                categoryToDelete = category,
+                relatedExpensesCount = count
+            )
+        }
+    }
+
+    fun onConfirmDeleteCategory() {
+        _deleteDialogState.value.categoryToDelete?.let { category ->
+            viewModelScope.launch {
+                deleteCategoryUseCase(category)
+                dismissDeleteDialog()
+            }
+        }
+    }
+
+    fun dismissDeleteDialog() {
+        _deleteDialogState.value = DeleteCategoryDialogState()
     }
 }

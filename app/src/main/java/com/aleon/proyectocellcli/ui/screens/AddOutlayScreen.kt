@@ -27,6 +27,7 @@ import androidx.navigation.NavController
 import com.aleon.proyectocellcli.domain.model.Category
 import com.aleon.proyectocellcli.ui.viewmodel.AddOutlayEvent
 import com.aleon.proyectocellcli.ui.viewmodel.AddOutlayViewModel
+import com.aleon.proyectocellcli.ui.viewmodel.DeleteCategoryDialogState
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import kotlinx.coroutines.flow.collectLatest
@@ -46,6 +47,7 @@ fun AddOutlayScreen(
     val formState by viewModel.formState.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val currencySymbol by viewModel.currencySymbol.collectAsState()
+    val deleteDialogState by viewModel.deleteDialogState.collectAsState()
 
     var showDatePicker by remember { mutableStateOf(false) }
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
@@ -58,7 +60,6 @@ fun AddOutlayScreen(
             when (event) {
                 is AddOutlayEvent.SaveSuccess -> {
                     Toast.makeText(context, "¡Gasto guardado!", Toast.LENGTH_SHORT).show()
-                    // If we are editing, close the screen. Otherwise, reset the form.
                     if (formState.expenseId != null) {
                         navController.popBackStack()
                     } else {
@@ -143,7 +144,57 @@ fun AddOutlayScreen(
             Text("Guardar Gasto")
         }
     }
-    // ... (Dialogs remain the same)
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = formState.date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val newDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+                        viewModel.onDateChange(newDate)
+                    }
+                    showDatePicker = false
+                }) { Text("Aceptar") }
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showCategoryDialog) {
+        CategoryEditDialog(
+            category = categoryToEdit,
+            onDismiss = { showCategoryDialog = false },
+            onSave = {
+                if (categoryToEdit == null) {
+                    viewModel.onAddCategory(it.name, it.color)
+                } else {
+                    viewModel.onUpdateCategory(it)
+                }
+                showCategoryDialog = false
+            }
+        )
+    }
+
+    if (showLimitAlert) {
+        AlertDialog(
+            onDismissRequest = { showLimitAlert = false },
+            title = { Text("Límite Excedido") },
+            text = { Text("Has superado tu límite de gastos mensual. El gasto se guardará de todas formas.") },
+            confirmButton = { Button(onClick = { showLimitAlert = false }) { Text("Entendido") } }
+        )
+    }
+
+    if (deleteDialogState.isVisible) {
+        DeleteCategoryConfirmationDialog(
+            state = deleteDialogState,
+            onConfirm = { viewModel.onConfirmDeleteCategory() },
+            onDismiss = { viewModel.dismissDeleteDialog() }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -252,5 +303,46 @@ fun CategoryEditDialog(category: Category?, onDismiss: () -> Unit, onSave: (Cate
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
+}
+
+@Composable
+private fun DeleteCategoryConfirmationDialog(
+    state: DeleteCategoryDialogState,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val title = "Confirmar Borrado"
+    val text = if (state.relatedExpensesCount > 0) {
+        "Esta categoría tiene ${state.relatedExpensesCount} gastos asociados. No se puede borrar hasta que esos gastos sean eliminados o reasignados."
+    } else {
+        "¿Estás seguro de que quieres borrar la categoría \"${state.categoryToDelete?.name}\"?"
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(text) },
+        confirmButton = {
+            if (state.relatedExpensesCount > 0) {
+                Button(onClick = onDismiss) {
+                    Text("Entendido")
+                }
+            } else {
+                Button(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Borrar de todas formas")
+                }
+            }
+        },
+        dismissButton = {
+            if (state.relatedExpensesCount == 0) {
+                TextButton(onClick = onDismiss) {
+                    Text("Cerrar")
+                }
+            }
+        }
     )
 }

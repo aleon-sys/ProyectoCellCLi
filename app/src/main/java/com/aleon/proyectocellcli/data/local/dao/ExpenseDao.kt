@@ -49,4 +49,7 @@ interface ExpenseDao {
 
     @Update
     suspend fun updateExpense(expense: ExpenseEntity)
+
+    @Query("SELECT COUNT(*) FROM expenses WHERE expenseCategoryId = :categoryId")
+    suspend fun getExpenseCountForCategory(categoryId: String): Int
 }

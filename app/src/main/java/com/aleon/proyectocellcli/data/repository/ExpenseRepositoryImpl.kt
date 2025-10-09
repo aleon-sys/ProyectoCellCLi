@@ -85,6 +85,10 @@ class ExpenseRepositoryImpl @Inject constructor(
     override suspend fun updateExpense(expense: Expense) {
         dao.updateExpense(expense.toEntityWithId())
     }
+
+    override suspend fun getExpenseCountForCategory(categoryId: String): Int {
+        return dao.getExpenseCountForCategory(categoryId)
+    }
 }
 
 // --- Mapper Functions ---
