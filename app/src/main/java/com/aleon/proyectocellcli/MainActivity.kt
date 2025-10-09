@@ -1,5 +1,6 @@
 package com.aleon.proyectocellcli
 
+import AppNavigation
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,7 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.aleon.proyectocellcli.ui.MainViewModel
-import com.aleon.proyectocellcli.ui.navigation.AppNavigation
+
 import com.aleon.proyectocellcli.ui.theme.ProyectocellcliTheme
 import dagger.hilt.android.AndroidEntryPoint
 
