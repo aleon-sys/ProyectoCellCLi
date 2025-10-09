@@ -33,7 +33,7 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.aleon.proyectocellcli.domain.model.Category
+import com.aleon.proyectocellcli.ui.viewmodel.CategoryTotal
 import com.aleon.proyectocellcli.ui.viewmodel.HomeViewModel
 
 
@@ -55,7 +55,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val categories by viewModel.categories.collectAsState()
+    val categoryTotals by viewModel.uiState.collectAsState()
     var activeFilter by remember { mutableStateOf(TimeframeType.MONTH) }
     var showDialog by remember { mutableStateOf<TimeframeType?>(null) }
     var selectedDateText by remember { mutableStateOf("Octubre 2025") }
@@ -89,7 +89,7 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(16.dp))
         
         // --- Totals List Section ---
-        CategoryTotalsList(categories = categories)
+        CategoryTotalsList(categoryTotals = categoryTotals)
     }
 
     // --- Dialogs ---
@@ -312,7 +312,7 @@ fun ChartCard() {
 
 // 3. Composable for the list of category totals
 @Composable
-fun CategoryTotalsList(categories: List<Category>) {
+fun CategoryTotalsList(categoryTotals: List<CategoryTotal>) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -324,14 +324,14 @@ fun CategoryTotalsList(categories: List<Category>) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
-        items(categories) { category ->
-            CategoryTotalItem(category = category)
+        items(categoryTotals) { categoryTotal ->
+            CategoryTotalItem(categoryTotal = categoryTotal)
         }
     }
 }
 
 @Composable
-fun CategoryTotalItem(category: Category) {
+fun CategoryTotalItem(categoryTotal: CategoryTotal) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
@@ -343,17 +343,17 @@ fun CategoryTotalItem(category: Category) {
             Box(
                 modifier = Modifier
                     .size(16.dp)
-                    .background(category.color, shape = CircleShape)
+                    .background(categoryTotal.color, shape = CircleShape)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = category.name,
+                text = categoryTotal.name,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "$0.00",
+                text = "$${"%.2f".format(categoryTotal.amount)}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 18.sp
