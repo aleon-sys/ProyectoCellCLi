@@ -1,29 +1,43 @@
 package com.aleon.proyectocellcli.ui.screens
 
-import androidx.compose.foundation.background
+import android.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import co.yml.charts.common.model.PlotType
-import co.yml.charts.ui.piechart.charts.PieChart
-import co.yml.charts.ui.piechart.models.PieChartConfig
-import co.yml.charts.ui.piechart.models.PieChartData
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.github.mikephil.charting.charts.PieChart
+import com.github.mikephil.charting.data.PieData
+import com.github.mikephil.charting.data.PieDataSet
+import com.github.mikephil.charting.data.PieEntry
+import com.github.mikephil.charting.formatter.PercentFormatter
+import com.github.mikephil.charting.utils.ColorTemplate
+
+import com.aleon.proyectocellcli.ui.MainViewModel
 
 // Data class for the list items
 data class CategoryTotal(val name: String, val amount: Double)
 
 // Main Composable for the Home Screen
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    mainViewModel: MainViewModel = hiltViewModel()
+) {
+    val currency by mainViewModel.currency.collectAsState()
+    val currencySymbol = remember(currency) {
+        currency.substringAfter("(").substringBefore(")")
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -34,32 +48,16 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
         TimeframeSelector()
         Spacer(modifier = Modifier.height(16.dp))
-        CategoryTotalsList()
+        CategoryTotalsList(currencySymbol = currencySymbol)
     }
 }
 
-// 1. Composable for the Donut Chart using ycharts (STABLE VERSION)
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChartCard() {
-    val pieChartData = PieChartData(
-        slices = listOf(
-            PieChartData.Slice("Comida", 4f, MaterialTheme.colorScheme.primary),
-            PieChartData.Slice("Transporte", 2f, MaterialTheme.colorScheme.secondary),
-            PieChartData.Slice("Ocio", 1f, MaterialTheme.colorScheme.tertiary),
-            PieChartData.Slice("Hogar", 3f, MaterialTheme.colorScheme.primaryContainer)
-        ),
-        plotType = PlotType.Donut
-    )
-
-    val pieChartConfig = PieChartConfig(
-        backgroundColor = MaterialTheme.colorScheme.surface
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.5f),
+            .height(300.dp), // Adjust height as needed
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(
@@ -67,49 +65,69 @@ fun ChartCard() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Resumen de Gastos", style = MaterialTheme.typography.titleMedium)
-            
-            BoxWithConstraints(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                val chartSize = minOf(maxWidth, maxHeight)
-                PieChart(
-                    modifier = Modifier.size(chartSize),
-                    pieChartData = pieChartData,
-                    pieChartConfig = pieChartConfig
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            ChartLegend(slices = pieChartData.slices)
+            Spacer(modifier = Modifier.height(8.dp))
+            DonutChart()
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ChartLegend(slices: List<PieChartData.Slice>, modifier: Modifier = Modifier) {
-    FlowRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        slices.forEach { slice ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(end = 16.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .background(slice.color, shape = CircleShape)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(text = slice.label, style = MaterialTheme.typography.bodySmall)
+fun DonutChart(modifier: Modifier = Modifier) {
+    val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
+
+    AndroidView(
+        modifier = modifier.fillMaxSize(),
+        factory = { context ->
+            PieChart(context).apply {
+                // Basic setup
+                isDrawHoleEnabled = true
+                holeRadius = 58f
+                transparentCircleRadius = 61f
+                setUsePercentValues(true)
+                description.isEnabled = false
+                legend.isEnabled = false
+                setEntryLabelColor(textColor)
+                setEntryLabelTextSize(12f)
+
+                // Center text
+                centerText = "Gastos"
+                setCenterTextSize(24f)
+                setCenterTextColor(textColor)
             }
+        },
+        update = { chart ->
+            // Create dummy data entries
+            val entries = ArrayList<PieEntry>()
+            entries.add(PieEntry(40f, "Comida"))
+            entries.add(PieEntry(25f, "Transporte"))
+            entries.add(PieEntry(15f, "Ocio"))
+            entries.add(PieEntry(10f, "Hogar"))
+            entries.add(PieEntry(10f, "Otros"))
+
+            val dataSet = PieDataSet(entries, "Categorías de Gastos")
+
+            // Configure colors
+            val colors = ArrayList<Int>()
+            for (c in ColorTemplate.MATERIAL_COLORS) colors.add(c)
+            for (c in ColorTemplate.VORDIPLOM_COLORS) colors.add(c)
+            dataSet.colors = colors
+
+            // Configure data set properties
+            dataSet.valueFormatter = PercentFormatter(chart)
+            dataSet.valueTextSize = 12f
+            dataSet.valueTextColor = Color.BLACK
+            dataSet.sliceSpace = 3f
+
+            val data = PieData(dataSet)
+            chart.data = data
+
+            // Animate and refresh
+            chart.animateY(1400)
+            chart.invalidate()
         }
-    }
+    )
 }
+
 
 // 2. Composable for the Day/Week/Month selector
 @Composable
@@ -131,7 +149,7 @@ fun TimeframeSelector() {
 
 // 3. Composable for the list of category totals
 @Composable
-fun CategoryTotalsList() {
+fun CategoryTotalsList(currencySymbol: String) {
     val sampleCategories = remember {
         listOf(
             CategoryTotal("Comida", 450.75),
@@ -154,13 +172,13 @@ fun CategoryTotalsList() {
             )
         }
         items(sampleCategories) { category ->
-            CategoryTotalItem(category = category)
+            CategoryTotalItem(category = category, currencySymbol = currencySymbol)
         }
     }
 }
 
 @Composable
-fun CategoryTotalItem(category: CategoryTotal) {
+fun CategoryTotalItem(category: CategoryTotal, currencySymbol: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
@@ -176,7 +194,7 @@ fun CategoryTotalItem(category: CategoryTotal) {
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "$${"%.2f".format(category.amount)}",
+                text = "$currencySymbol${"%.2f".format(category.amount)}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 18.sp

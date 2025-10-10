@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,6 +22,7 @@ class UserPreferencesRepository @Inject constructor(@ApplicationContext context:
     private object PreferencesKeys {
         val THEME = stringPreferencesKey("theme_preference")
         val CURRENCY = stringPreferencesKey("currency_preference")
+        val MONTHLY_LIMIT = floatPreferencesKey("monthly_limit")
     }
 
     val theme = dataStore.data.map { preferences ->
@@ -29,6 +31,10 @@ class UserPreferencesRepository @Inject constructor(@ApplicationContext context:
 
     val currency = dataStore.data.map { preferences ->
         preferences[PreferencesKeys.CURRENCY] ?: "USD ($)"
+    }
+
+    val monthlyLimit = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.MONTHLY_LIMIT] ?: 0f
     }
 
     suspend fun setTheme(theme: String) {
@@ -40,6 +46,12 @@ class UserPreferencesRepository @Inject constructor(@ApplicationContext context:
     suspend fun setCurrency(currency: String) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.CURRENCY] = currency
+        }
+    }
+
+    suspend fun setMonthlyLimit(limit: Float) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.MONTHLY_LIMIT] = limit
         }
     }
 }

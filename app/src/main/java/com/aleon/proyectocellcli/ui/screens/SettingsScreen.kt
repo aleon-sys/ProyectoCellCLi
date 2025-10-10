@@ -1,12 +1,33 @@
 package com.aleon.proyectocellcli.ui.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -15,19 +36,27 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.aleon.proyectocellcli.ui.MainViewModel
 import com.aleon.proyectocellcli.ui.viewmodel.SettingsViewModel
+import java.util.Locale
 
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel()
 ) {
     val selectedTheme by viewModel.theme.collectAsState()
-    val selectedCurrency by viewModel.currency.collectAsState()
-    
-    var monthlyLimit by remember { mutableStateOf("") } // This remains local for now
+    val selectedCurrency by mainViewModel.currency.collectAsState()
+    val monthlyLimit by viewModel.monthlyLimit.collectAsState()
+
+    val currencySymbol = remember(selectedCurrency) {
+        selectedCurrency.substringAfter("(").substringBefore(")")
+    }
+
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
+    var showMonthlyLimitDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -63,13 +92,15 @@ fun SettingsScreen(
 
         // --- Monthly Limit ---
         SettingSection(title = "Límite Mensual") {
-            OutlinedTextField(
-                value = monthlyLimit,
-                onValueChange = { monthlyLimit = it },
-                label = { Text("Establecer límite de gastos") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                leadingIcon = { Text(selectedCurrency.substringAfter("(").substringBefore(")")) },
-                modifier = Modifier.fillMaxWidth()
+            val limitText = if (monthlyLimit > 0f) {
+                String.format(Locale.getDefault(), "%s%.2f", currencySymbol, monthlyLimit)
+            } else {
+                "No establecido"
+            }
+            SettingItem(
+                title = "Establecer límite de gastos",
+                subtitle = limitText,
+                onClick = { showMonthlyLimitDialog = true }
             )
         }
 
@@ -91,7 +122,7 @@ fun SettingsScreen(
     if (showDeleteConfirmation) {
         DeleteConfirmationDialog(
             onConfirm = {
-                // TODO: Add logic to delete all data
+                viewModel.onDeleteAllExpenses()
                 showDeleteConfirmation = false
             },
             onDismiss = { showDeleteConfirmation = false }
@@ -105,6 +136,17 @@ fun SettingsScreen(
                 showCurrencyDialog = false
             },
             onDismiss = { showCurrencyDialog = false }
+        )
+    }
+
+    if (showMonthlyLimitDialog) {
+        MonthlyLimitDialog(
+            currencySymbol = currencySymbol,
+            onConfirm = { limit ->
+                viewModel.onSetMonthlyLimit(limit)
+                showMonthlyLimitDialog = false
+            },
+            onDismiss = { showMonthlyLimitDialog = false }
         )
     }
 }
@@ -188,12 +230,12 @@ fun CurrencySelectionDialog(onCurrencySelected: (String) -> Unit, onDismiss: () 
                 item {
                     Text("Seleccionar Moneda", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
                 }
-                items(currencies) { currency ->
+                items(currencies) { currencyItem ->
                     Text(
-                        text = currency,
+                        text = currencyItem,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onCurrencySelected(currency) }
+                            .clickable { onCurrencySelected(currencyItem) }
                             .padding(vertical = 12.dp)
                     )
                 }
@@ -202,8 +244,46 @@ fun CurrencySelectionDialog(onCurrencySelected: (String) -> Unit, onDismiss: () 
     }
 }
 
+@Composable
+fun MonthlyLimitDialog(
+    currencySymbol: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var limit by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Establecer Límite Mensual") },
+        text = {
+            OutlinedTextField(
+                value = limit,
+                onValueChange = { newLimit ->
+                    if (newLimit.matches(Regex("^\\d*(\\.\\d{0,2})?$"))) {
+                        limit = newLimit
+                    }
+                },
+                label = { Text("Límite") },
+                leadingIcon = { Text(currencySymbol) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(onClick = { onConfirm(limit) }) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
-    SettingsScreen()
+    // SettingsScreen() // Preview might not work easily with Hilt
 }

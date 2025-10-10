@@ -13,7 +13,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
-class DashboardViewModel @Inject constructor(
+class OutlayViewModel @Inject constructor(
     private val getExpensesUseCase: GetExpensesUseCase
 ) : ViewModel() {
 

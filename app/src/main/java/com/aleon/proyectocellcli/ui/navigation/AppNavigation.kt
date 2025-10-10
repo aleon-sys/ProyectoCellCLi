@@ -1,6 +1,6 @@
 package com.aleon.proyectocellcli.ui.navigation
 
-import DashboardScreen
+import OutlayScreen
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
@@ -11,9 +11,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.aleon.proyectocellcli.ui.screens.AddOutlayScreen
-
 import com.aleon.proyectocellcli.ui.screens.HomeScreen
 import com.aleon.proyectocellcli.ui.screens.SettingsScreen
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -33,9 +33,9 @@ fun AppNavigation() {
             composable(Screen.AddOutlayScreen.route) {
                 AddOutlayScreen()
             }
-            composable(Screen.DashboardScreen.route) {
-                DashboardScreen()
-            }
+        composable(Screen.Outlay.route) {
+            OutlayScreen()
+        }
             composable(Screen.SettingsScreen.route) {
                 SettingsScreen()
             }

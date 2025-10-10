@@ -51,6 +51,10 @@ class ExpenseRepositoryImpl @Inject constructor(
             list.map { it.toDomain() }
         }
     }
+
+    override suspend fun deleteAllExpenses() {
+        dao.deleteAllExpenses()
+    }
 }
 
 // --- Mapper Functions ---

@@ -33,12 +33,15 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+import com.aleon.proyectocellcli.ui.MainViewModel
+
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddOutlayScreen(
     modifier: Modifier = Modifier,
-    viewModel: AddOutlayViewModel = hiltViewModel()
+    viewModel: AddOutlayViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel()
 ) {
     // --- State ---
     var description by remember { mutableStateOf("") }
@@ -48,6 +51,11 @@ fun AddOutlayScreen(
     
     val categories by viewModel.categories.collectAsState()
     var selectedCategory by remember(categories) { mutableStateOf(categories.firstOrNull()) }
+    
+    val currency by mainViewModel.currency.collectAsState()
+    val currencySymbol = remember(currency) {
+        currency.substringAfter("(").substringBefore(")")
+    }
     
     var isDropdownExpanded by remember { mutableStateOf(false) }
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
@@ -73,7 +81,7 @@ fun AddOutlayScreen(
             },
             label = { Text("Monto") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            leadingIcon = { Text("$") },
+            leadingIcon = { Text(currencySymbol) },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))

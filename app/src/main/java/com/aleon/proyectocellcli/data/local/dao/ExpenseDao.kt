@@ -29,4 +29,7 @@ interface ExpenseDao {
     @Transaction
     @Query("SELECT * FROM expenses ORDER BY dateValue DESC")
     fun getExpensesWithCategory(): Flow<List<ExpenseWithCategory>>
+
+    @Query("DELETE FROM expenses")
+    suspend fun deleteAllExpenses()
 }

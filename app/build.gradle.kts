@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt")
+    alias(libs.plugins.kotlin.ksp)
     id("com.google.dagger.hilt.android")
 }
 
@@ -39,10 +39,6 @@ android {
     buildFeatures {
         compose = true
     }
-    // Allow references to generated code
-    kapt {
-        correctErrorTypes = true
-    }
 }
 
 dependencies {
@@ -63,7 +59,8 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.foundation.layout)
-    kapt("androidx.room:room-compiler:2.6.1")
+    implementation(libs.runtime)
+    ksp("androidx.room:room-compiler:2.6.1")
 
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.7.7")
@@ -84,8 +81,11 @@ dependencies {
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-compiler:2.51.1")
+    ksp("com.google.dagger:hilt-compiler:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    // MPAndroidChart
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

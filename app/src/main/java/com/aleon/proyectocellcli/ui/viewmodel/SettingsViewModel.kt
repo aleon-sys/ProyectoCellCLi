@@ -2,9 +2,12 @@ package com.aleon.proyectocellcli.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aleon.proyectocellcli.domain.use_case.DeleteAllExpensesUseCase
 import com.aleon.proyectocellcli.domain.use_case.GetCurrencyUseCase
+import com.aleon.proyectocellcli.domain.use_case.GetMonthlyLimitUseCase
 import com.aleon.proyectocellcli.domain.use_case.GetThemeUseCase
 import com.aleon.proyectocellcli.domain.use_case.SetCurrencyUseCase
+import com.aleon.proyectocellcli.domain.use_case.SetMonthlyLimitUseCase
 import com.aleon.proyectocellcli.domain.use_case.SetThemeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,7 +20,10 @@ class SettingsViewModel @Inject constructor(
     private val getThemeUseCase: GetThemeUseCase,
     private val setThemeUseCase: SetThemeUseCase,
     private val getCurrencyUseCase: GetCurrencyUseCase,
-    private val setCurrencyUseCase: SetCurrencyUseCase
+    private val setCurrencyUseCase: SetCurrencyUseCase,
+    private val getMonthlyLimitUseCase: GetMonthlyLimitUseCase,
+    private val setMonthlyLimitUseCase: SetMonthlyLimitUseCase,
+    private val deleteAllExpensesUseCase: DeleteAllExpensesUseCase
 ) : ViewModel() {
 
     val theme = getThemeUseCase().stateIn(
@@ -32,6 +38,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = "USD ($)"
     )
 
+    val monthlyLimit = getMonthlyLimitUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0f
+    )
+
     fun onThemeSelected(theme: String) {
         viewModelScope.launch {
             setThemeUseCase(theme)
@@ -41,6 +53,19 @@ class SettingsViewModel @Inject constructor(
     fun onCurrencySelected(currency: String) {
         viewModelScope.launch {
             setCurrencyUseCase(currency)
+        }
+    }
+
+    fun onSetMonthlyLimit(limit: String) {
+        viewModelScope.launch {
+            val limitAsFloat = limit.toFloatOrNull() ?: 0f
+            setMonthlyLimitUseCase(limitAsFloat)
+        }
+    }
+
+    fun onDeleteAllExpenses() {
+        viewModelScope.launch {
+            deleteAllExpensesUseCase()
         }
     }
 }

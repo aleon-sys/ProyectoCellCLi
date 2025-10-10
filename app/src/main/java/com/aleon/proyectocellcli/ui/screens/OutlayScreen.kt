@@ -41,20 +41,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aleon.proyectocellcli.domain.model.Expense
-import com.aleon.proyectocellcli.ui.viewmodel.DashboardViewModel
+import com.aleon.proyectocellcli.ui.viewmodel.OutlayViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
+import com.aleon.proyectocellcli.ui.MainViewModel
 
 // --- Main Composable ---
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DashboardScreen(
+fun OutlayScreen(
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = hiltViewModel()
+    viewModel: OutlayViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel()
 ) {
     val expensesByDate by viewModel.expensesByDate.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    val currency by mainViewModel.currency.collectAsState()
+    val currencySymbol = remember(currency) {
+        currency.substringAfter("(").substringBefore(")")
+    }
 
     Column(
         modifier = modifier
@@ -87,7 +94,7 @@ fun DashboardScreen(
                     DateHeader(date = date)
                 }
                 items(expenses) { expense ->
-                    ExpenseItem(expense = expense)
+                    ExpenseItem(expense = expense, currencySymbol = currencySymbol)
                 }
             }
         }
@@ -115,7 +122,7 @@ fun DateHeader(date: LocalDate) {
 }
 
 @Composable
-fun ExpenseItem(expense: Expense) {
+fun ExpenseItem(expense: Expense, currencySymbol: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
@@ -145,7 +152,7 @@ fun ExpenseItem(expense: Expense) {
                 }
             }
             Text(
-                text = "$${"%.2f".format(expense.amount)}",
+                text = "$currencySymbol${"%.2f".format(expense.amount)}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 16.dp)
