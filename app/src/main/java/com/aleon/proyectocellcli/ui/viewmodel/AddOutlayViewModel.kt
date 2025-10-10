@@ -16,11 +16,16 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
+sealed class AddOutlayEvent {
+    data object ExpenseSavedAndClose : AddOutlayEvent()
+    data object ExpenseSavedAndContinue : AddOutlayEvent()
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class AddOutlayViewModel @Inject constructor(
     private val addExpenseUseCase: AddExpenseUseCase,
-    private val getCategoriesUseCase: GetCategoriesUseCase,
+    getCategoriesUseCase: GetCategoriesUseCase,
     private val addCategoryUseCase: AddCategoryUseCase,
     private val updateCategoryUseCase: UpdateCategoryUseCase,
     private val getExpenseByIdUseCase: GetExpenseByIdUseCase,
@@ -48,13 +53,21 @@ class AddOutlayViewModel @Inject constructor(
     )
 
     // --- Event Flow for UI Actions ---
-    private val _saveEvent = MutableSharedFlow<Unit>()
-    val saveEvent = _saveEvent.asSharedFlow()
+    private val _eventFlow = MutableSharedFlow<AddOutlayEvent>()
+    val eventFlow = _eventFlow.asSharedFlow()
 
     private val expenseId: Long = savedStateHandle.get<Long>("expenseId") ?: -1L
     private var currentExpense: Expense? = null
 
     init {
+        viewModelScope.launch {
+            categories.collect { categoryList ->
+                if (expenseId == -1L && _selectedCategory.value == null && categoryList.isNotEmpty()) {
+                    _selectedCategory.value = categoryList.first()
+                }
+            }
+        }
+
         if (expenseId != -1L) {
             loadExpenseDetails()
         }
@@ -62,23 +75,25 @@ class AddOutlayViewModel @Inject constructor(
 
     private fun loadExpenseDetails() {
         viewModelScope.launch {
-            getExpenseByIdUseCase(expenseId).collect { expense ->
-                if (expense != null) {
-                    currentExpense = expense
-                    _description.value = expense.description
-                    _amount.value = String.format("%.2f", expense.amount)
-                    _selectedDate.value = expense.date
-                    _selectedCategory.value = expense.category
-                }
+            getExpenseByIdUseCase(expenseId).filterNotNull().first().let { expense ->
+                currentExpense = expense
+                _description.value = expense.description
+                _amount.value = String.format("%.2f", expense.amount)
+                _selectedDate.value = expense.date
+                _selectedCategory.value = expense.category
             }
         }
+    }
+
+    private fun clearFields() {
+        _description.value = ""
+        _amount.value = ""
     }
 
     // --- UI Event Handlers ---
     fun onDescriptionChange(newDescription: String) { _description.value = newDescription }
     fun onAmountChange(newAmount: String) {
-        if (newAmount.matches(Regex("^\\d*(\\.\\d{0,2})?$")))
-         {
+        if (newAmount.matches(Regex("^\\d*(\\.\\d{0,2})?$"))) {
             _amount.value = newAmount
         }
     }
@@ -97,10 +112,12 @@ class AddOutlayViewModel @Inject constructor(
 
             if (currentExpense != null) {
                 updateExpenseUseCase(expenseToSave)
+                _eventFlow.emit(AddOutlayEvent.ExpenseSavedAndClose)
             } else {
                 addExpenseUseCase(expenseToSave)
+                clearFields()
+                _eventFlow.emit(AddOutlayEvent.ExpenseSavedAndContinue)
             }
-            _saveEvent.emit(Unit) // Emit event after saving
         }
     }
 
