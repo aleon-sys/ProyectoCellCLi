@@ -10,7 +10,8 @@ La aplicación está construida con una arquitectura moderna y escalable, utiliz
 
 El proyecto sigue los principios de **Clean Architecture**, separando el código en tres capas principales para garantizar que la aplicación sea robusta, escalable y fácil de testear.
 
-![Clean Architecture Diagram](https://i.imgur.com/sOk222W.png)
+<img width="227" height="222" alt="image" src="https://github.com/user-attachments/assets/fd370418-00e0-4d72-9df9-48ec71e01580" />
+
 
 ### 2.1. Capas de la Arquitectura
 
