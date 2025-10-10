@@ -12,12 +12,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import java.time.LocalDate
 import java.time.Month
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.time.temporal.TemporalAdjusters
+import java.util.Locale
 import javax.inject.Inject
 
 data class DateFilter(
     val startDate: LocalDate,
-    val endDate: LocalDate
+    val endDate: LocalDate,
+    val description: String
 )
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -30,39 +34,51 @@ class HomeViewModel @Inject constructor(
 
     private val _dateFilter = MutableStateFlow<DateFilter?>(null)
 
+    val filterDescription: StateFlow<String> = _dateFilter.map { filter ->
+        filter?.description ?: "Este Mes"
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "Este Mes"
+    )
+
     val categorySpending: StateFlow<List<CategorySpending>> = _dateFilter.flatMapLatest { filter ->
-        if (filter != null) {
-            getCategorySpendingForDateRangeUseCase(filter.startDate, filter.endDate)
-        } else {
-            // By default, show data for the current month
+        val dateRange = filter ?: run {
             val today = LocalDate.now()
             val startDate = today.with(TemporalAdjusters.firstDayOfMonth())
             val endDate = today.with(TemporalAdjusters.lastDayOfMonth())
-            getCategorySpendingForDateRangeUseCase(startDate, endDate)
+            DateFilter(startDate, endDate, "Este Mes")
         }
+        getCategorySpendingForDateRangeUseCase(dateRange.startDate, dateRange.endDate)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
 
+    private val dayFormatter = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale("es", "ES"))
+    private val periodFormatter = DateTimeFormatter.ofPattern("dd/MM/yy", Locale("es", "ES"))
+
     fun setDayFilter(date: LocalDate) {
-        _dateFilter.value = DateFilter(date, date)
+        val description = date.format(dayFormatter)
+        _dateFilter.value = DateFilter(date, date, description)
     }
 
     fun setMonthFilter(month: Month, year: Int) {
         val startDate = LocalDate.of(year, month, 1)
         val endDate = startDate.with(TemporalAdjusters.lastDayOfMonth())
-        _dateFilter.value = DateFilter(startDate, endDate)
+        val description = "${month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() }} $year"
+        _dateFilter.value = DateFilter(startDate, endDate, description)
     }
 
     fun setYearFilter(year: Int) {
         val startDate = LocalDate.of(year, Month.JANUARY, 1)
         val endDate = LocalDate.of(year, Month.DECEMBER, 31)
-        _dateFilter.value = DateFilter(startDate, endDate)
+        _dateFilter.value = DateFilter(startDate, endDate, year.toString())
     }
 
     fun setPeriodFilter(startDate: LocalDate, endDate: LocalDate) {
-        _dateFilter.value = DateFilter(startDate, endDate)
+        val description = "${startDate.format(periodFormatter)} - ${endDate.format(periodFormatter)}"
+        _dateFilter.value = DateFilter(startDate, endDate, description)
     }
 }

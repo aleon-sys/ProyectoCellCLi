@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -50,6 +51,7 @@ fun HomeScreen(
         currency.substringAfter("(").substringBefore(")")
     }
     val categorySpending by homeViewModel.categorySpending.collectAsState()
+    val filterDescription by homeViewModel.filterDescription.collectAsState()
 
     Column(
         modifier = modifier
@@ -57,7 +59,10 @@ fun HomeScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ChartCard(categorySpending = categorySpending)
+        ChartCard(
+            categorySpending = categorySpending,
+            filterDescription = filterDescription
+        )
         Spacer(modifier = Modifier.height(16.dp))
         TimeframeSelector(homeViewModel = homeViewModel)
         Spacer(modifier = Modifier.height(16.dp))
@@ -69,7 +74,10 @@ fun HomeScreen(
 }
 
 @Composable
-fun ChartCard(categorySpending: List<CategorySpending>) {
+fun ChartCard(
+    categorySpending: List<CategorySpending>,
+    filterDescription: String
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -80,7 +88,15 @@ fun ChartCard(categorySpending: List<CategorySpending>) {
             modifier = Modifier.fillMaxSize().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Resumen de Gastos", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "Resumen de Gastos",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = filterDescription,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(modifier = Modifier.height(8.dp))
             DonutChart(categorySpending = categorySpending)
         }
