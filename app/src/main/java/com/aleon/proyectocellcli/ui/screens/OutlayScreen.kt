@@ -1,18 +1,10 @@
+package com.aleon.proyectocellcli.ui.screens
+
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -21,43 +13,35 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.aleon.proyectocellcli.domain.model.Expense
+import com.aleon.proyectocellcli.ui.MainViewModel
+import com.aleon.proyectocellcli.ui.navigation.Screen
 import com.aleon.proyectocellcli.ui.viewmodel.OutlayViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.aleon.proyectocellcli.ui.MainViewModel
-
-// --- Main Composable ---
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OutlayScreen(
     modifier: Modifier = Modifier,
+    navController: NavController,
     viewModel: OutlayViewModel = hiltViewModel(),
     mainViewModel: MainViewModel = hiltViewModel()
 ) {
     val expensesByDate by viewModel.expensesByDate.collectAsState()
-    var searchQuery by remember { mutableStateOf("") }
+    val searchQuery by viewModel.searchQuery.collectAsState()
     val currency by mainViewModel.currency.collectAsState()
     val currencySymbol = remember(currency) {
         currency.substringAfter("(").substringBefore(")")
@@ -69,16 +53,15 @@ fun OutlayScreen(
             .padding(horizontal = 16.dp)
     ) {
         Spacer(modifier = Modifier.height(16.dp))
-        // Search Bar
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = { searchQuery = it },
+            onValueChange = { viewModel.onSearchQueryChange(it) },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Buscar gastos...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
-            shape = RoundedCornerShape(50), // Oval shape
+            shape = RoundedCornerShape(50),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant, // Greyish border
+                unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 focusedBorderColor = MaterialTheme.colorScheme.primary
             )
         )
@@ -93,15 +76,22 @@ fun OutlayScreen(
                 stickyHeader {
                     DateHeader(date = date)
                 }
-                items(expenses) { expense ->
-                    ExpenseItem(expense = expense, currencySymbol = currencySymbol)
+                items(expenses, key = { it.id }) { expense ->
+                    ExpenseItem(
+                        expense = expense,
+                        currencySymbol = currencySymbol,
+                        onEditClick = {
+                            navController.navigate(Screen.AddOutlay.createRoute(expense.id.toLong()))
+                        },
+                        onDeleteClick = {
+                            viewModel.onDeleteExpense(expense)
+                        }
+                    )
                 }
             }
         }
     }
 }
-
-// --- Child Composables ---
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -122,7 +112,12 @@ fun DateHeader(date: LocalDate) {
 }
 
 @Composable
-fun ExpenseItem(expense: Expense, currencySymbol: String) {
+fun ExpenseItem(
+    expense: Expense,
+    currencySymbol: String,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
@@ -145,7 +140,7 @@ fun ExpenseItem(expense: Expense, currencySymbol: String) {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = expense.category.name, // Correctly access the 'name' property
+                        text = expense.category.name,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -158,14 +153,13 @@ fun ExpenseItem(expense: Expense, currencySymbol: String) {
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             Row {
-                IconButton(onClick = { /* TODO: Edit logic */ }) {
+                IconButton(onClick = onEditClick) {
                     Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Gasto")
                 }
-                IconButton(onClick = { /* TODO: Delete logic */ }) {
+                IconButton(onClick = onDeleteClick) {
                     Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar Gasto")
                 }
             }
         }
     }
 }
-

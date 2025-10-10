@@ -23,6 +23,17 @@ interface ExpenseDao {
     @Update
     suspend fun updateCategory(category: CategoryEntity)
 
+    @Update
+    suspend fun updateExpense(expense: ExpenseEntity)
+
+    @Query("DELETE FROM expenses WHERE expenseId = :id")
+    suspend fun deleteExpenseById(id: Long)
+
+    @Transaction
+    @Query("SELECT * FROM expenses WHERE expenseId = :id")
+    fun getExpenseWithCategoryById(id: Long): Flow<ExpenseWithCategory?>
+
+
     @Query("SELECT * FROM categories ORDER BY name ASC")
     fun getAllCategories(): Flow<List<CategoryEntity>>
 

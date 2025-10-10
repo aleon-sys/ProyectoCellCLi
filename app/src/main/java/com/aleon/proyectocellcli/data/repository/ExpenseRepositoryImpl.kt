@@ -46,6 +46,21 @@ class ExpenseRepositoryImpl @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun updateExpense(expense: Expense) {
+        dao.updateExpense(expense.toEntity(isUpdate = true))
+    }
+
+    override suspend fun deleteExpenseById(id: Long) {
+        dao.deleteExpenseById(id)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun getExpenseById(id: Long): Flow<Expense?> {
+        return dao.getExpenseWithCategoryById(id).map { it?.toDomain() }
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun getExpenses(): Flow<List<Expense>> {
         return dao.getExpensesWithCategory().map { list ->
             list.map { it.toDomain() }
@@ -80,8 +95,9 @@ private fun Category.toEntity(): CategoryEntity {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-private fun Expense.toEntity(): ExpenseEntity {
+private fun Expense.toEntity(isUpdate: Boolean = false): ExpenseEntity {
     return ExpenseEntity(
+        expenseId = if (isUpdate) this.id else 0,
         description = this.description,
         amount = this.amount,
         dateValue = this.date.toEpochDay(),

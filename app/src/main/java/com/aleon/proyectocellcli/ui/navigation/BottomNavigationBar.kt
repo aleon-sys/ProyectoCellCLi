@@ -32,7 +32,7 @@ fun BottomNavigationBar(navController: NavController) {
         BottomNavItem(
             label = "Añadir",
             icon = Icons.Filled.Add,
-            route = Screen.AddOutlayScreen.route
+            route = Screen.AddOutlay.route
         ),
         BottomNavItem(
             label = "Gastos",
