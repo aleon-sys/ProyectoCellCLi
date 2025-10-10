@@ -52,6 +52,8 @@ fun HomeScreen(
     }
     val categorySpending by homeViewModel.categorySpending.collectAsState()
     val filterDescription by homeViewModel.filterDescription.collectAsState()
+    val totalSpending by homeViewModel.totalSpending.collectAsState()
+    val monthlyLimit by homeViewModel.monthlyLimit.collectAsState()
 
     Column(
         modifier = modifier
@@ -62,6 +64,12 @@ fun HomeScreen(
         ChartCard(
             categorySpending = categorySpending,
             filterDescription = filterDescription
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        SpendingSummaryText(
+            totalSpending = totalSpending,
+            monthlyLimit = monthlyLimit,
+            currencySymbol = currencySymbol
         )
         Spacer(modifier = Modifier.height(16.dp))
         TimeframeSelector(homeViewModel = homeViewModel)
@@ -102,6 +110,43 @@ fun ChartCard(
         }
     }
 }
+
+@Composable
+fun SpendingSummaryText(
+    totalSpending: Double,
+    monthlyLimit: Float,
+    currencySymbol: String
+) {
+    val isOverLimit = monthlyLimit > 0 && totalSpending > monthlyLimit
+    val textColor = if (isOverLimit) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+
+    val formattedTotal = String.format(Locale.getDefault(), "%.2f", totalSpending)
+    val formattedLimit = String.format(Locale.getDefault(), "%.2f", monthlyLimit)
+
+    val text = if (monthlyLimit > 0f) {
+        "$currencySymbol$formattedTotal de $currencySymbol$formattedLimit"
+    } else {
+        "Gasto del periodo: $currencySymbol$formattedTotal"
+    }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = text,
+            color = textColor,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold
+        )
+        if (isOverLimit) {
+            Text(
+                text = "(Límite superado)",
+                color = textColor,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
 
 @Composable
 fun DonutChart(
@@ -272,7 +317,7 @@ fun YearPickerDialog(onDismiss: () -> Unit, onYearSelected: (Int) -> Unit) {
             }
         },
         confirmButton = { Button(onClick = { onYearSelected(year) }) { Text("Aceptar") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+        dismissButton = { TextButton(onClick = { onDismiss }) { Text("Cancelar") } }
     )
 }
 

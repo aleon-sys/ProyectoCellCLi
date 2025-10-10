@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.aleon.proyectocellcli.domain.model.CategorySpending
 import com.aleon.proyectocellcli.domain.use_case.GetAllCategorySpendingUseCase
 import com.aleon.proyectocellcli.domain.use_case.GetCategorySpendingForDateRangeUseCase
+import com.aleon.proyectocellcli.domain.use_case.GetMonthlyLimitUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -28,8 +29,8 @@ data class DateFilter(
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getAllCategorySpendingUseCase: GetAllCategorySpendingUseCase,
-    private val getCategorySpendingForDateRangeUseCase: GetCategorySpendingForDateRangeUseCase
+    private val getCategorySpendingForDateRangeUseCase: GetCategorySpendingForDateRangeUseCase,
+    getMonthlyLimitUseCase: GetMonthlyLimitUseCase
 ) : ViewModel() {
 
     private val _dateFilter = MutableStateFlow<DateFilter?>(null)
@@ -54,6 +55,20 @@ class HomeViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
+    )
+
+    val totalSpending = categorySpending.map { list ->
+        list.sumOf { it.total }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0.0
+    )
+
+    val monthlyLimit = getMonthlyLimitUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0f
     )
 
     private val dayFormatter = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale("es", "ES"))
