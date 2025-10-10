@@ -4,12 +4,16 @@ import com.aleon.proyectocellcli.domain.model.Category
 import com.aleon.proyectocellcli.domain.model.Expense
 import com.aleon.proyectocellcli.domain.model.CategorySpending
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 interface ExpenseRepository {
 
     fun getCategories(): Flow<List<Category>>
     
-    fun getCategorySpending(): Flow<List<CategorySpending>>
+    fun getAllCategorySpending(): Flow<List<CategorySpending>>
+
+    fun getCategorySpendingForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<List<CategorySpending>>
+
 
 
     suspend fun addCategory(category: Category)

@@ -5,10 +5,10 @@ import com.aleon.proyectocellcli.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class GetCategorySpendingUseCase @Inject constructor(
+class GetAllCategorySpendingUseCase @Inject constructor(
     private val repository: ExpenseRepository
 ) {
     operator fun invoke(): Flow<List<CategorySpending>> {
-        return repository.getCategorySpending()
+        return repository.getAllCategorySpending()
     }
 }

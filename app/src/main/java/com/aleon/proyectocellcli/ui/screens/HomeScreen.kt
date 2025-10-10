@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -32,7 +31,6 @@ import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.PercentFormatter
-import com.github.mikephil.charting.utils.ColorTemplate
 import java.time.Instant
 import java.time.LocalDate
 import java.time.Month
@@ -59,9 +57,9 @@ fun HomeScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ChartCard()
+        ChartCard(categorySpending = categorySpending)
         Spacer(modifier = Modifier.height(16.dp))
-        TimeframeSelector() // This will be the new one
+        TimeframeSelector(homeViewModel = homeViewModel)
         Spacer(modifier = Modifier.height(16.dp))
         CategoryTotalsList(
             categorySpending = categorySpending,
@@ -71,7 +69,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun ChartCard() {
+fun ChartCard(categorySpending: List<CategorySpending>) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -84,13 +82,16 @@ fun ChartCard() {
         ) {
             Text("Resumen de Gastos", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
-            DonutChart()
+            DonutChart(categorySpending = categorySpending)
         }
     }
 }
 
 @Composable
-fun DonutChart(modifier: Modifier = Modifier) {
+fun DonutChart(
+    modifier: Modifier = Modifier,
+    categorySpending: List<CategorySpending>
+) {
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
 
     AndroidView(
@@ -111,20 +112,18 @@ fun DonutChart(modifier: Modifier = Modifier) {
             }
         },
         update = { chart ->
-            val entries = ArrayList<PieEntry>()
-            entries.add(PieEntry(40f, "Comida"))
-            entries.add(PieEntry(25f, "Transporte"))
-            entries.add(PieEntry(15f, "Ocio"))
+            val entries = categorySpending.map { PieEntry(it.total.toFloat(), it.category.name) }
+            val colors = categorySpending.map { it.category.color.toArgb() }
 
             val dataSet = PieDataSet(entries, "Categorías")
-            dataSet.colors = ColorTemplate.MATERIAL_COLORS.toList()
+            dataSet.colors = colors
             dataSet.valueFormatter = PercentFormatter(chart)
             dataSet.valueTextSize = 12f
             dataSet.valueTextColor = Color.BLACK
             dataSet.sliceSpace = 3f
 
             chart.data = PieData(dataSet)
-            chart.animateY(1400)
+            chart.animateY(1000)
             chart.invalidate()
         }
     )
@@ -133,7 +132,7 @@ fun DonutChart(modifier: Modifier = Modifier) {
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimeframeSelector() {
+fun TimeframeSelector(homeViewModel: HomeViewModel) {
     var showDayPicker by remember { mutableStateOf(false) }
     var showMonthPicker by remember { mutableStateOf(false) }
     var showYearPicker by remember { mutableStateOf(false) }
@@ -149,30 +148,28 @@ fun TimeframeSelector() {
         OutlinedButton(onClick = { showPeriodPicker = true }) { Text("Periodo") }
     }
 
-    // --- Dialogs ---
     if (showDayPicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
             onDismissRequest = { showDayPicker = false },
             confirmButton = {
                 Button(onClick = {
-                    // TODO: Logic to handle selected date
+                    datePickerState.selectedDateMillis?.let {
+                        val date = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+                        homeViewModel.setDayFilter(date)
+                    }
                     showDayPicker = false
                 }) { Text("Aceptar") }
             },
-            dismissButton = {
-                TextButton(onClick = { showDayPicker = false }) { Text("Cancelar") }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+            dismissButton = { TextButton(onClick = { showDayPicker = false }) { Text("Cancelar") } }
+        ) { DatePicker(state = datePickerState) }
     }
 
     if (showMonthPicker) {
         MonthPickerDialog(
             onDismiss = { showMonthPicker = false },
-            onMonthSelected = { month ->
-                // TODO: Logic to handle selected month
+            onMonthSelected = { month, year ->
+                homeViewModel.setMonthFilter(month, year)
                 showMonthPicker = false
             }
         )
@@ -182,7 +179,7 @@ fun TimeframeSelector() {
         YearPickerDialog(
             onDismiss = { showYearPicker = false },
             onYearSelected = { year ->
-                // TODO: Logic to handle selected year
+                homeViewModel.setYearFilter(year)
                 showYearPicker = false
             }
         )
@@ -193,35 +190,47 @@ fun TimeframeSelector() {
         DatePickerDialog(
             onDismissRequest = { showPeriodPicker = false },
             confirmButton = {
-                Button(onClick = {
-                    // TODO: Logic to handle selected range
-                    showPeriodPicker = false
-                }) { Text("Aceptar") }
+                Button(
+                    enabled = dateRangePickerState.selectedStartDateMillis != null && dateRangePickerState.selectedEndDateMillis != null,
+                    onClick = {
+                        val startDate = Instant.ofEpochMilli(dateRangePickerState.selectedStartDateMillis!!).atZone(ZoneOffset.UTC).toLocalDate()
+                        val endDate = Instant.ofEpochMilli(dateRangePickerState.selectedEndDateMillis!!).atZone(ZoneOffset.UTC).toLocalDate()
+                        homeViewModel.setPeriodFilter(startDate, endDate)
+                        showPeriodPicker = false
+                    }) { Text("Aceptar") }
             },
-            dismissButton = {
-                TextButton(onClick = { showPeriodPicker = false }) { Text("Cancelar") }
-            }
-        ) {
-            DateRangePicker(state = dateRangePickerState, modifier = Modifier.height(500.dp))
-        }
+            dismissButton = { TextButton(onClick = { showPeriodPicker = false }) { Text("Cancelar") } }
+        ) { DateRangePicker(state = dateRangePickerState, modifier = Modifier.height(500.dp)) }
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MonthPickerDialog(onDismiss: () -> Unit, onMonthSelected: (Month) -> Unit) {
+fun MonthPickerDialog(onDismiss: () -> Unit, onMonthSelected: (Month, Int) -> Unit) {
     val months = Month.values()
+    var year by remember { mutableStateOf(LocalDate.now().year) }
     Dialog(onDismissRequest = onDismiss) {
         Card {
-            LazyColumn(modifier = Modifier.padding(16.dp)) {
-                items(months) { month ->
-                    Text(
-                        text = month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onMonthSelected(month) }
-                            .padding(vertical = 12.dp)
-                    )
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { year-- }) { Icon(Icons.Default.ArrowBack, "Año anterior") }
+                    Text(text = year.toString(), style = MaterialTheme.typography.titleMedium)
+                    IconButton(onClick = { year++ }) { Icon(Icons.Default.ArrowForward, "Año siguiente") }
+                }
+                LazyColumn {
+                    items(months) { month ->
+                        Text(
+                            text = month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onMonthSelected(month, year) }
+                                .padding(vertical = 12.dp)
+                        )
+                    }
                 }
             }
         }
@@ -246,21 +255,13 @@ fun YearPickerDialog(onDismiss: () -> Unit, onYearSelected: (Int) -> Unit) {
                 IconButton(onClick = { year++ }) { Icon(Icons.Default.ArrowForward, "Año siguiente") }
             }
         },
-        confirmButton = {
-            Button(onClick = { onYearSelected(year) }) { Text("Aceptar") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
-        }
+        confirmButton = { Button(onClick = { onYearSelected(year) }) { Text("Aceptar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
     )
 }
 
-
 @Composable
-fun CategoryTotalsList(
-    categorySpending: List<CategorySpending>,
-    currencySymbol: String
-) {
+fun CategoryTotalsList(categorySpending: List<CategorySpending>, currencySymbol: String) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -282,10 +283,7 @@ fun CategoryTotalsList(
 }
 
 @Composable
-fun CategoryTotalItem(
-    categorySpending: CategorySpending,
-    currencySymbol: String
-) {
+fun CategoryTotalItem(categorySpending: CategorySpending, currencySymbol: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)

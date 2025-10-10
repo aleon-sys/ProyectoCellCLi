@@ -38,11 +38,22 @@ interface ExpenseDao {
     @Query("""
         SELECT c.*, SUM(e.amount) as total
         FROM categories c
-        JOIN expenses e ON c.categoryId = e.expenseCategoryId
+        LEFT JOIN expenses e ON c.categoryId = e.expenseCategoryId
         GROUP BY c.categoryId
         ORDER BY total DESC
     """)
-    fun getCategoryTotals(): Flow<List<CategoryWithTotal>>
+    fun getAllCategoryTotals(): Flow<List<CategoryWithTotal>>
+
+    @Transaction
+    @Query("""
+        SELECT c.*, SUM(e.amount) as total
+        FROM categories c
+        JOIN expenses e ON c.categoryId = e.expenseCategoryId
+        WHERE e.dateValue BETWEEN :startDate AND :endDate
+        GROUP BY c.categoryId
+        ORDER BY total DESC
+    """)
+    fun getCategoryTotalsForDateRange(startDate: Long, endDate: Long): Flow<List<CategoryWithTotal>>
 
 
 

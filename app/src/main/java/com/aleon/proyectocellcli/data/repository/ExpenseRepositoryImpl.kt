@@ -30,8 +30,15 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getCategorySpending(): Flow<List<CategorySpending>> {
-        return dao.getCategoryTotals().map { list ->
+    override fun getAllCategorySpending(): Flow<List<CategorySpending>> {
+        return dao.getAllCategoryTotals().map { list ->
+            list.map { it.toDomain() }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun getCategorySpendingForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<List<CategorySpending>> {
+        return dao.getCategoryTotalsForDateRange(startDate.toEpochDay(), endDate.toEpochDay()).map { list ->
             list.map { it.toDomain() }
         }
     }
