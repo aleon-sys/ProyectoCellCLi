@@ -1,8 +1,8 @@
-# Expense Tracker App - Documentación Técnica
+# Gestor de gastos - Documentación Técnica
 
 ## 1. Descripción General
 
-**Expense Tracker** es una aplicación nativa de Android diseñada para ayudar a los usuarios a registrar y visualizar sus gastos diarios. La aplicación permite a los usuarios añadir gastos, categorizarlos, ver resúmenes visuales en gráficos y filtrar sus gastos por diferentes periodos de tiempo.
+**Gestor de gastos** es una aplicación nativa de Android diseñada para ayudar a los usuarios a registrar y visualizar sus gastos diarios. La aplicación permite a los usuarios añadir gastos, categorizarlos, ver resúmenes visuales en gráficos y filtrar sus gastos por diferentes periodos de tiempo.
 
 La aplicación está construida con una arquitectura moderna y escalable, utilizando las últimas tecnologías recomendadas por Google para el desarrollo de Android.
 
