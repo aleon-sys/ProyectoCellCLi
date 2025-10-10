@@ -74,7 +74,8 @@ fun SettingsScreen(
         SettingSection(title = "Tema de la Aplicación") {
             ThemeSelector(
                 selectedTheme = selectedTheme,
-                onThemeSelected = { viewModel.onThemeSelected(it) }
+                onThemeSelected = { viewModel.onThemeSelected(it) },
+                enabled = viewModel.isProVersion
             )
         }
 
@@ -164,7 +165,11 @@ fun SettingSection(title: String, content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-fun ThemeSelector(selectedTheme: String, onThemeSelected: (String) -> Unit) {
+fun ThemeSelector(
+    selectedTheme: String,
+    onThemeSelected: (String) -> Unit,
+    enabled: Boolean
+) {
     val themes = listOf("Claro", "Oscuro", "Sistema")
     Row(modifier = Modifier.fillMaxWidth()) {
         themes.forEach { theme ->
@@ -172,11 +177,12 @@ fun ThemeSelector(selectedTheme: String, onThemeSelected: (String) -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { onThemeSelected(theme) }
+                    .clickable(enabled = enabled) { onThemeSelected(theme) }
             ) {
                 RadioButton(
                     selected = selectedTheme == theme,
-                    onClick = { onThemeSelected(theme) }
+                    onClick = { onThemeSelected(theme) },
+                    enabled = enabled
                 )
                 Text(text = theme, modifier = Modifier.padding(start = 4.dp))
             }

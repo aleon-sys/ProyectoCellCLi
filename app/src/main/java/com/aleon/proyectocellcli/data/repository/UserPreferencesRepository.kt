@@ -26,7 +26,7 @@ class UserPreferencesRepository @Inject constructor(@ApplicationContext context:
     }
 
     val theme = dataStore.data.map { preferences ->
-        preferences[PreferencesKeys.THEME] ?: "Sistema"
+        preferences[PreferencesKeys.THEME] ?: "Claro"
     }
 
     val currency = dataStore.data.map { preferences ->

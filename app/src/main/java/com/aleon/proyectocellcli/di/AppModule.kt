@@ -1,6 +1,7 @@
 package com.aleon.proyectocellcli.di
 
 import android.content.Context
+import androidx.room.Room
 import com.aleon.proyectocellcli.data.local.AppDatabase
 import com.aleon.proyectocellcli.data.local.dao.ExpenseDao
 import dagger.Module
@@ -16,13 +17,16 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return AppDatabase.getDatabase(context)
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
+        return Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            "expense_tracker_database"
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides
-    @Singleton
-    fun provideExpenseDao(appDatabase: AppDatabase): ExpenseDao {
-        return appDatabase.expenseDao()
+    fun provideExpenseDao(database: AppDatabase): ExpenseDao {
+        return database.expenseDao()
     }
 }

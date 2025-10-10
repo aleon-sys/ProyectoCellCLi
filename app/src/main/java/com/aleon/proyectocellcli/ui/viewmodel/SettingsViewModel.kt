@@ -2,6 +2,7 @@ package com.aleon.proyectocellcli.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aleon.proyectocellcli.di.AppConfig
 import com.aleon.proyectocellcli.domain.use_case.DeleteAllExpensesUseCase
 import com.aleon.proyectocellcli.domain.use_case.GetCurrencyUseCase
 import com.aleon.proyectocellcli.domain.use_case.GetMonthlyLimitUseCase
@@ -23,13 +24,16 @@ class SettingsViewModel @Inject constructor(
     private val setCurrencyUseCase: SetCurrencyUseCase,
     private val getMonthlyLimitUseCase: GetMonthlyLimitUseCase,
     private val setMonthlyLimitUseCase: SetMonthlyLimitUseCase,
-    private val deleteAllExpensesUseCase: DeleteAllExpensesUseCase
+    private val deleteAllExpensesUseCase: DeleteAllExpensesUseCase,
+    appConfig: AppConfig
 ) : ViewModel() {
+
+    val isProVersion = appConfig.isPro
 
     val theme = getThemeUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = "Sistema"
+        initialValue = "Claro"
     )
 
     val currency = getCurrencyUseCase().stateIn(
