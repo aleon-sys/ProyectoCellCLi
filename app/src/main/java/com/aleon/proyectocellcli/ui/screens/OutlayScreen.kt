@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -162,7 +163,10 @@ fun ExpenseItem(
                 IconButton(onClick = onEditClick) {
                     Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Gasto")
                 }
-                IconButton(onClick = onDeleteClick) {
+                IconButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier.testTag("delete_button_${expense.id}")
+                ) {
                     Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar Gasto")
                 }
             }

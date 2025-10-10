@@ -14,7 +14,7 @@ import javax.inject.Singleton
 @Module
 @TestInstallIn(
     components = [SingletonComponent::class],
-    replaces = [RepositoryModule::class] // We replace the real repository module
+    replaces = [RepositoryModule::class, FlavorAppModule::class] // Replace both real modules
 )
 abstract class TestRepositoryModule {
 
@@ -23,4 +23,10 @@ abstract class TestRepositoryModule {
     abstract fun bindExpenseRepository(
         fakeExpenseRepository: FakeExpenseRepository
     ): ExpenseRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppConfig(
+        fakeAppConfig: FakeAppConfig
+    ): AppConfig
 }

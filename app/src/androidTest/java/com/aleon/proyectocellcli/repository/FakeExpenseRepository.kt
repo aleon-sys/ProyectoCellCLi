@@ -2,8 +2,6 @@ package com.aleon.proyectocellcli.repository
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.snapshots.toInt
-import androidx.compose.runtime.snapshots.toLong
 import com.aleon.proyectocellcli.domain.model.Category
 import com.aleon.proyectocellcli.domain.model.CategorySpending
 import com.aleon.proyectocellcli.domain.model.Expense
@@ -49,8 +47,8 @@ class FakeExpenseRepository @Inject constructor() : ExpenseRepository {
     }
 
     override suspend fun addExpense(expense: Expense) {
-        // The ViewModel is responsible for creating the ID in a real scenario.
-        // For this test, we just add the expense to the list.
+        // For the test, we don't need to simulate ID generation.
+        // We just confirm that the item passed from the ViewModel is added to the list.
         _expenses.value = _expenses.value.plus(expense)
     }
 
@@ -64,23 +62,35 @@ class FakeExpenseRepository @Inject constructor() : ExpenseRepository {
     }
 
     override fun getExpenseById(id: Long): Flow<Expense?> {
-        return _expenses.map { list -> list.find { it.id.toLong() == id.toLong() } }
+        return _expenses.map { list -> list.find { it.id.toLong() == id } }
     }
 
     override suspend fun addCategory(category: Category) {
         _categories.value = _categories.value.plus(category)
     }
 
-    // --- Unused functions for these tests, but required by the interface ---
-    override suspend fun deleteCategory(category: Category) { /* Not needed */ }
-    override suspend fun updateCategory(category: Category) { /* Not needed */ }
-    override suspend fun deleteExpenseById(id: Long) { /* Not needed */ }
+    override suspend fun deleteCategory(category: Category) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateCategory(category: Category) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteExpenseById(id: Long) {
+        _expenses.value = _expenses.value.filterNot { it.id.toLong() == id }
+    }
+
     override fun getExpenses(): Flow<List<Expense>> = _expenses.asStateFlow()
-    override suspend fun deleteAllExpenses() { _expenses.value = emptyList() }
+
+    override suspend fun deleteAllExpenses() {
+        _expenses.value = emptyList()
+    }
 
     fun insertExpenses(expenses: List<Expense>) {
         _expenses.value = expenses
     }
+
     fun insertCategories(categories: List<Category>) {
         _categories.value = categories
     }

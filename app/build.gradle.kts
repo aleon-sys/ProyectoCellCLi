@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.foundation.layout)
     implementation(libs.runtime)
+    implementation(libs.androidx.runner)
     ksp("androidx.room:room-compiler:2.6.1")
 
     // Navigation Compose
