@@ -20,8 +20,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.aleon.proyectocellcli.domain.model.Expense
@@ -60,6 +62,7 @@ fun OutlayScreen(
             placeholder = { Text("Buscar gastos...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
             shape = RoundedCornerShape(50),
+            textStyle = TextStyle(fontSize = 18.sp), // Increased font size
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 focusedBorderColor = MaterialTheme.colorScheme.primary
@@ -130,7 +133,8 @@ fun ExpenseItem(
                 Text(
                     text = expense.description,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold, // Bolder
+                    fontSize = 17.sp // Bigger
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -149,8 +153,10 @@ fun ExpenseItem(
             Text(
                 text = "$currencySymbol${"%.2f".format(expense.amount)}",
                 style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold, // Bolder
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
+                fontSize = 18.sp // Bigger
             )
             Row {
                 IconButton(onClick = onEditClick) {

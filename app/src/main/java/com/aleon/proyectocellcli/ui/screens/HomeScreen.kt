@@ -158,10 +158,10 @@ fun TimeframeSelector(homeViewModel: HomeViewModel) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
-        OutlinedButton(onClick = { showDayPicker = true }) { Text("Día") }
-        OutlinedButton(onClick = { showMonthPicker = true }) { Text("Mes") }
-        OutlinedButton(onClick = { showYearPicker = true }) { Text("Año") }
-        OutlinedButton(onClick = { showPeriodPicker = true }) { Text("Periodo") }
+        OutlinedButton(onClick = { showDayPicker = true }) { Text("Día", fontWeight = FontWeight.Bold) }
+        OutlinedButton(onClick = { showMonthPicker = true }) { Text("Mes", fontWeight = FontWeight.Bold) }
+        OutlinedButton(onClick = { showYearPicker = true }) { Text("Año", fontWeight = FontWeight.Bold) }
+        OutlinedButton(onClick = { showPeriodPicker = true }) { Text("Periodo", fontWeight = FontWeight.Bold) }
     }
 
     if (showDayPicker) {
@@ -317,14 +317,16 @@ fun CategoryTotalItem(categorySpending: CategorySpending, currencySymbol: String
             Text(
                 text = categorySpending.category.name,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold, // Bolder
+                fontSize = 17.sp // Bigger
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = "$currencySymbol${"%.2f".format(categorySpending.total)}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
-                fontSize = 18.sp
+                fontSize = 19.sp, // Bigger
+                fontWeight = FontWeight.Bold // Bolder
             )
         }
     }

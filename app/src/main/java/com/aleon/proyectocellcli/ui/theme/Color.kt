@@ -2,10 +2,21 @@ package com.aleon.proyectocellcli.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Main Palette based on #31628d
+val PrimaryBlue = Color(0xFF31628D)
+val DarkPrimaryBlue = Color(0xFF1E4976)
+val LightPrimaryBlue = Color(0xFF5C89B6)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val SecondaryTeal = Color(0xFF00897B)
+val DarkSecondaryTeal = Color(0xFF005B4F)
+val LightSecondaryTeal = Color(0xFF4DB6AC)
+
+val TertiaryYellow = Color(0xFFFFC107)
+val DarkTertiaryYellow = Color(0xFFC79100)
+
+// Neutral Colors
+val TextPrimary = Color(0xFF212121)
+val TextSecondary = Color(0xFF757575)
+val BackgroundLight = Color(0xFFF5F5F5)
+val BackgroundDark = Color(0xFF121212)
+val SurfaceDark = Color(0xFF1E1E1E)

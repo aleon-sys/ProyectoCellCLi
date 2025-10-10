@@ -19,8 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.aleon.proyectocellcli.domain.model.Category
@@ -92,7 +95,8 @@ fun AddOutlayScreen(
             value = description,
             onValueChange = { viewModel.onDescriptionChange(it) },
             label = { Text("Descripción") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(fontSize = 18.sp)
         )
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
@@ -101,7 +105,8 @@ fun AddOutlayScreen(
             label = { Text("Monto") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             leadingIcon = { Text(currencySymbol) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(fontSize = 18.sp)
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -113,7 +118,8 @@ fun AddOutlayScreen(
                 readOnly = true,
                 label = { Text("Fecha") },
                 leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = "Date Icon") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = TextStyle(fontSize = 18.sp)
             )
             Box(
                 modifier = Modifier
@@ -137,7 +143,8 @@ fun AddOutlayScreen(
                         label = { Text("Categoría") },
                         leadingIcon = { Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(selectedCategory!!.color)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDropdownExpanded) },
-                        modifier = Modifier.menuAnchor()
+                        modifier = Modifier.menuAnchor(),
+                        textStyle = TextStyle(fontSize = 18.sp)
                     )
                     ExposedDropdownMenu(expanded = isDropdownExpanded, onDismissRequest = { isDropdownExpanded = false }) {
                         categories.forEach { category ->
@@ -183,7 +190,11 @@ fun AddOutlayScreen(
             modifier = Modifier.fillMaxWidth().height(50.dp),
             enabled = selectedCategory != null && description.isNotBlank() && amount.isNotBlank()
         ) {
-            Text("Guardar Gasto")
+            Text(
+                "Guardar Gasto",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 
