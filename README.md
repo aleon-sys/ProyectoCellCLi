@@ -1,4 +1,4 @@
-# Expense Tracker App
+# Aplicación de Gestor De Gastos
 
 Esta es una aplicación nativa de Android para el seguimiento de gastos personales. Este documento proporciona las instrucciones necesarias para configurar, compilar y ejecutar el proyecto.
 
