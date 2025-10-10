@@ -1,12 +1,10 @@
 package com.aleon.proyectocellcli.repository
 
-import com.aleon.proyectocellcli.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// A fake repository for user preferences used in UI tests.
 @Singleton
 class FakeUserPreferencesRepository @Inject constructor() {
 

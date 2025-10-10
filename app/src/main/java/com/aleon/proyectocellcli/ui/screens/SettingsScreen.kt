@@ -70,7 +70,6 @@ fun SettingsScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // --- Theme Selection ---
         SettingSection(title = "Tema de la Aplicación") {
             ThemeSelector(
                 selectedTheme = selectedTheme,
@@ -81,7 +80,6 @@ fun SettingsScreen(
 
         Divider(modifier = Modifier.padding(vertical = 16.dp))
 
-        // --- Currency Selection ---
         SettingSection(title = "Moneda") {
             SettingItem(
                 title = "Moneda Principal",
@@ -92,7 +90,6 @@ fun SettingsScreen(
 
         Divider(modifier = Modifier.padding(vertical = 16.dp))
 
-        // --- Monthly Limit ---
         SettingSection(title = "Límite Mensual") {
             val limitText = if (monthlyLimit > 0f) {
                 String.format(Locale.getDefault(), "%s%.2f", currencySymbol, monthlyLimit)
@@ -108,7 +105,6 @@ fun SettingsScreen(
 
         Divider(modifier = Modifier.padding(vertical = 16.dp))
 
-        // --- Data Management ---
         SettingSection(title = "Gestión de Datos") {
             Button(
                 onClick = { showDeleteConfirmation = true },
@@ -120,7 +116,6 @@ fun SettingsScreen(
         }
     }
 
-    // --- Dialogs ---
     if (showDeleteConfirmation) {
         DeleteConfirmationDialog(
             onConfirm = {
@@ -152,8 +147,6 @@ fun SettingsScreen(
         )
     }
 }
-
-// --- Child Composables for Settings Screen ---
 
 @Composable
 fun SettingSection(title: String, content: @Composable ColumnScope.() -> Unit) {
@@ -203,14 +196,14 @@ fun SettingItem(title: String, subtitle: String, onClick: () -> Unit) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontSize = 18.sp, // Bigger
-                fontWeight = FontWeight.SemiBold // Bolder
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 16.sp // Bigger
+                fontSize = 16.sp
             )
         }
     }
@@ -302,5 +295,4 @@ fun MonthlyLimitDialog(
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
-    // SettingsScreen() // Preview might not work easily with Hilt
 }

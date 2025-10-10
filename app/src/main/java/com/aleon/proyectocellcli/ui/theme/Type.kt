@@ -14,7 +14,6 @@ val AdventPro = FontFamily(
     Font(R.font.adventpro_bold, FontWeight.Bold)
 )
 
-// Set of Material typography styles to start with
 val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = AdventPro,

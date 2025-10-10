@@ -5,7 +5,6 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aleon.proyectocellcli.domain.model.CategorySpending
-import com.aleon.proyectocellcli.domain.use_case.GetAllCategorySpendingUseCase
 import com.aleon.proyectocellcli.domain.use_case.GetCategorySpendingForDateRangeUseCase
 import com.aleon.proyectocellcli.domain.use_case.GetMonthlyLimitUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel

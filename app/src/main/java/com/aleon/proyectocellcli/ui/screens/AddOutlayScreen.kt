@@ -17,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -34,7 +33,6 @@ import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
@@ -49,7 +47,6 @@ fun AddOutlayScreen(
 ) {
     val context = LocalContext.current
 
-    // --- State from ViewModel ---
     val description by viewModel.description.collectAsState()
     val amount by viewModel.amount.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
@@ -61,13 +58,11 @@ fun AddOutlayScreen(
         currency.substringAfter("(").substringBefore(")")
     }
 
-    // --- Local UI State ---
     var showDatePicker by remember { mutableStateOf(false) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     var categoryToEdit by remember { mutableStateOf<Category?>(null) }
     var showCategoryDialog by remember { mutableStateOf(false) }
 
-    // --- Event Listener ---
     LaunchedEffect(key1 = Unit) {
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
@@ -77,13 +72,11 @@ fun AddOutlayScreen(
                 }
                 is AddOutlayEvent.ExpenseSavedAndContinue -> {
                     Toast.makeText(context, "Gasto guardado", Toast.LENGTH_SHORT).show()
-                    // Fields are cleared in the ViewModel, no navigation needed
                 }
             }
         }
     }
 
-    // --- UI ---
     Column(
         modifier = modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -110,7 +103,6 @@ fun AddOutlayScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Date Picker Field
         Box {
             OutlinedTextField(
                 value = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),

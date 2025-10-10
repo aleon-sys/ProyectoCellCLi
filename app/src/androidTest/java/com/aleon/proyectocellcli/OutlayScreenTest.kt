@@ -2,7 +2,6 @@ package com.aleon.proyectocellcli
 
 import android.os.Build
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -46,14 +45,12 @@ class OutlayScreenTest {
 
     @Test
     fun searchFunctionality_filtersCorrectly() {
-        // 1. Prepare data
         val expenses = listOf(
             Expense(id = 1, description = "Café Matutino", amount = 3.50, date = LocalDate.now(), category = category1),
             Expense(id = 2, description = "Almuerzo de trabajo", amount = 12.0, date = LocalDate.now(), category = category1)
         )
         fakeExpenseRepository.insertExpenses(expenses)
 
-        // 2. Launch UI
         composeRule.activity.setContent {
             ProyectocellcliTheme {
                 val navController = rememberNavController()
@@ -61,14 +58,11 @@ class OutlayScreenTest {
             }
         }
 
-        // 3. Assert initial state
         composeRule.onNodeWithText("Café Matutino").assertIsDisplayed()
         composeRule.onNodeWithText("Almuerzo de trabajo").assertIsDisplayed()
 
-        // 4. Perform search
         composeRule.onNodeWithText("Buscar gastos...").performTextInput("Café")
 
-        // 5. Assert final state
         composeRule.onNodeWithText("Café Matutino").assertIsDisplayed()
         composeRule.onNodeWithText("Almuerzo de trabajo").assertDoesNotExist()
     }

@@ -2,7 +2,6 @@ package com.aleon.proyectocellcli.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Main Palette based on #31628d
 val PrimaryBlue = Color(0xFF31628D)
 val DarkPrimaryBlue = Color(0xFF1E4976)
 val LightPrimaryBlue = Color(0xFF5C89B6)
@@ -14,7 +13,6 @@ val LightSecondaryTeal = Color(0xFF4DB6AC)
 val TertiaryYellow = Color(0xFFFFC107)
 val DarkTertiaryYellow = Color(0xFFC79100)
 
-// Neutral Colors
 val TextPrimary = Color(0xFF212121)
 val TextSecondary = Color(0xFF757575)
 val BackgroundLight = Color(0xFFF5F5F5)

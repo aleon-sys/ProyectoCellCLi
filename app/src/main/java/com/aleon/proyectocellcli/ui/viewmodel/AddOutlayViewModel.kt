@@ -2,7 +2,6 @@ package com.aleon.proyectocellcli.ui.viewmodel
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.snapshots.toInt
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -32,8 +31,6 @@ class AddOutlayViewModel @Inject constructor(
     private val updateExpenseUseCase: UpdateExpenseUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
-    // --- State Flows for UI fields ---
     private val _description = MutableStateFlow("")
     val description = _description.asStateFlow()
 
@@ -51,8 +48,6 @@ class AddOutlayViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(5000),
         emptyList()
     )
-
-    // --- Event Flow for UI Actions ---
     private val _eventFlow = MutableSharedFlow<AddOutlayEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
@@ -90,7 +85,6 @@ class AddOutlayViewModel @Inject constructor(
         _amount.value = ""
     }
 
-    // --- UI Event Handlers ---
     fun onDescriptionChange(newDescription: String) { _description.value = newDescription }
     fun onAmountChange(newAmount: String) {
         if (newAmount.matches(Regex("^\\d*(\\.\\d{0,2})?$"))) {

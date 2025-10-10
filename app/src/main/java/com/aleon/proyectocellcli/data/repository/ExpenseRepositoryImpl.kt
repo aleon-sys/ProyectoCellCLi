@@ -88,7 +88,6 @@ class ExpenseRepositoryImpl @Inject constructor(
     }
 }
 
-// --- Mapper Functions ---
 
 private fun CategoryWithTotal.toDomain(): CategorySpending {
     return CategorySpending(
@@ -114,7 +113,7 @@ private fun Category.toEntity(): CategoryEntity {
     return CategoryEntity(
         categoryId = this.id,
         name = this.name,
-        colorValue = this.color.toArgb() // CORRECT WAY to convert Color to Int
+        colorValue = this.color.toArgb()
     )
 }
 

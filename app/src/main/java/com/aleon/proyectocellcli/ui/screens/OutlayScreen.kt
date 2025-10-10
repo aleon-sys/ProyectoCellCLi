@@ -134,8 +134,8 @@ fun ExpenseItem(
                 Text(
                     text = expense.description,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold, // Bolder
-                    fontSize = 17.sp // Bigger
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 17.sp
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -154,10 +154,10 @@ fun ExpenseItem(
             Text(
                 text = "$currencySymbol${"%.2f".format(expense.amount)}",
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold, // Bolder
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 16.dp),
-                fontSize = 18.sp // Bigger
+                fontSize = 18.sp
             )
             Row {
                 IconButton(onClick = onEditClick) {

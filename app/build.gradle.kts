@@ -55,7 +55,7 @@ android {
 
 dependencies {
 
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -65,43 +65,31 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-    // Room
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.foundation.layout)
     implementation(libs.runtime)
     implementation(libs.androidx.runner)
-    ksp("androidx.room:room-compiler:2.6.1")
+    ksp(libs.androidx.room.compiler)
 
-    // Navigation Compose
-    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation(libs.androidx.navigation.compose)
 
-    // Vico Charts (Currently unused in favor of basic Compose chart)
-    implementation("com.patrykandpatrick.vico:core:1.14.0")
-    implementation("com.patrykandpatrick.vico:compose:1.14.0")
-    implementation("com.patrykandpatrick.vico:compose-m3:1.14.0")
+    implementation(libs.colorpicker.compose)
 
-    // Color Picker
-    implementation("com.github.skydoves:colorpicker-compose:1.0.0")
-
-    // YCharts
-    implementation("co.yml:ycharts:2.1.0")
-
-    // DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation(libs.androidx.datastore.preferences)
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    ksp("com.google.dagger:hilt-compiler:2.51.1")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    androidTestImplementation("com.google.dagger:hilt-android-testing:2.51.1")
-    kspAndroidTest("com.google.dagger:hilt-android-compiler:2.51.1")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
 
     // MPAndroidChart
-    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
-    androidTestImplementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation(libs.mpandroidchart)
+    androidTestImplementation(libs.mpandroidchart)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

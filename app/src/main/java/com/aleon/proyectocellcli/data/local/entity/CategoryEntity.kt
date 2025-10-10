@@ -9,13 +9,13 @@ import com.aleon.proyectocellcli.domain.model.Category
 data class CategoryEntity(
     @PrimaryKey val categoryId: String,
     val name: String,
-    val colorValue: Int // Storing color as a primitive Int
+    val colorValue: Int
 )
 
 fun CategoryEntity.toDomain(): Category {
     return Category(
         id = this.categoryId,
         name = this.name,
-        color = Color(this.colorValue) // Conversion happens here, at the layer boundary
+        color = Color(this.colorValue)
     )
 }

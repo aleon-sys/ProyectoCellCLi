@@ -23,7 +23,7 @@ class MainViewModel @Inject constructor(
         if (appConfig.isPro) {
             theme
         } else {
-            "Claro" // Force light theme for free version
+            "Claro"
         }
     }.stateIn(
         scope = viewModelScope,

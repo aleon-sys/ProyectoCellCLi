@@ -2,7 +2,6 @@ package com.aleon.proyectocellcli
 
 import android.os.Build
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -53,7 +52,6 @@ class AddOutlayScreenTest {
 
     @Test
     fun addMode_fillsFieldsAndSaves_newExpenseAppearsInRepository() {
-        // 1. Launch the screen in "Add" mode
         composeRule.activity.setContent {
             ProyectocellcliTheme {
                 val navController = rememberNavController()
@@ -61,12 +59,10 @@ class AddOutlayScreenTest {
             }
         }
 
-        // 2. Perform UI actions
         composeRule.onNodeWithText("Descripción").performTextInput("Café")
         composeRule.onNodeWithText("Monto").performTextInput("3.50")
         composeRule.onNodeWithText("Guardar Gasto").performClick()
 
-        // 3. Assert that the new expense was added to the repository
         composeRule.waitUntil(timeoutMillis = 2000) {
             fakeExpenseRepository.currentExpenses.any { it.description == "Café" }
         }
@@ -76,11 +72,9 @@ class AddOutlayScreenTest {
 
     @Test
     fun editMode_loadsDataAndSaves_updatesSuccessfully() {
-        // 1. Prepare test data
         val initialExpense = Expense(id = 101, description = "Cena Tailandesa", amount = 45.0, date = LocalDate.now(), category = testCategory)
         fakeExpenseRepository.insertExpenses(listOf(initialExpense))
 
-        // 2. Launch the screen in "Edit" mode
         composeRule.activity.setContent {
             ProyectocellcliTheme {
                 val navController = rememberNavController()
@@ -98,16 +92,12 @@ class AddOutlayScreenTest {
             }
         }
 
-        // 3. Assert initial state is loaded
         composeRule.onNodeWithText("Cena Tailandesa").assertIsDisplayed()
 
-        // 4. Perform UI actions
         composeRule.onNodeWithText("Cena Tailandesa").performTextClearance()
         composeRule.onNodeWithText("Descripción").performTextInput("Cena Tailandesa Editada")
         composeRule.onNodeWithText("Guardar Gasto").performClick()
 
-        // 5. Assert that the data was updated in the repository
-        // We need to wait a bit for the save to process
         composeRule.waitUntil(timeoutMillis = 2000) {
             fakeExpenseRepository.currentExpenses.any { it.description == "Cena Tailandesa Editada" }
         }

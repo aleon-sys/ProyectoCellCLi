@@ -35,7 +35,10 @@ class FakeExpenseRepository @Inject constructor() : ExpenseRepository {
         }
     }
 
-    override fun getCategorySpendingForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<List<CategorySpending>> {
+    override fun getCategorySpendingForDateRange(
+        startDate: LocalDate,
+        endDate: LocalDate
+    ): Flow<List<CategorySpending>> {
         return _expenses.map { expenses ->
             expenses
                 .filter { it.date in startDate..endDate }
@@ -47,8 +50,6 @@ class FakeExpenseRepository @Inject constructor() : ExpenseRepository {
     }
 
     override suspend fun addExpense(expense: Expense) {
-        // For the test, we don't need to simulate ID generation.
-        // We just confirm that the item passed from the ViewModel is added to the list.
         _expenses.value = _expenses.value.plus(expense)
     }
 
@@ -69,13 +70,9 @@ class FakeExpenseRepository @Inject constructor() : ExpenseRepository {
         _categories.value = _categories.value.plus(category)
     }
 
-    override suspend fun deleteCategory(category: Category) {
-        TODO("Not yet implemented")
-    }
+    override suspend fun deleteCategory(category: Category) {}
 
-    override suspend fun updateCategory(category: Category) {
-        TODO("Not yet implemented")
-    }
+    override suspend fun updateCategory(category: Category) {}
 
     override suspend fun deleteExpenseById(id: Long) {
         _expenses.value = _expenses.value.filterNot { it.id.toLong() == id }

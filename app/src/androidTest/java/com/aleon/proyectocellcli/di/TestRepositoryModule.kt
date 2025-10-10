@@ -14,7 +14,7 @@ import javax.inject.Singleton
 @Module
 @TestInstallIn(
     components = [SingletonComponent::class],
-    replaces = [RepositoryModule::class, FlavorAppModule::class] // Replace both real modules
+    replaces = [RepositoryModule::class, FlavorAppModule::class]
 )
 abstract class TestRepositoryModule {
 
