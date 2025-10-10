@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,9 +30,11 @@ fun AppNavigation() {
             startDestination = Screen.HomeScreen.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.HomeScreen.route) {
-                HomeScreen()
-            }
+        composable(Screen.HomeScreen.route) {
+            HomeScreen(
+                homeViewModel = hiltViewModel()
+            )
+        }
         composable(
             route = Screen.AddOutlay.route,
             arguments = listOf(navArgument("expenseId") {

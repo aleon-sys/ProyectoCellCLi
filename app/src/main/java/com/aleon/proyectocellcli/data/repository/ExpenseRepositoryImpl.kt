@@ -5,10 +5,12 @@ import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.toArgb
 import com.aleon.proyectocellcli.data.local.dao.ExpenseDao
 import com.aleon.proyectocellcli.data.local.entity.CategoryEntity
+import com.aleon.proyectocellcli.data.local.entity.CategoryWithTotal
 import com.aleon.proyectocellcli.data.local.entity.ExpenseEntity
 import com.aleon.proyectocellcli.data.local.entity.ExpenseWithCategory
 import com.aleon.proyectocellcli.data.local.entity.toDomain
 import com.aleon.proyectocellcli.domain.model.Category
+import com.aleon.proyectocellcli.domain.model.CategorySpending
 import com.aleon.proyectocellcli.domain.model.Expense
 import com.aleon.proyectocellcli.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.Flow
@@ -27,6 +29,13 @@ class ExpenseRepositoryImpl @Inject constructor(
             entities.map { it.toDomain() }
         }
     }
+
+    override fun getCategorySpending(): Flow<List<CategorySpending>> {
+        return dao.getCategoryTotals().map { list ->
+            list.map { it.toDomain() }
+        }
+    }
+
 
     override suspend fun addCategory(category: Category) {
         dao.insertCategory(category.toEntity())
@@ -73,6 +82,14 @@ class ExpenseRepositoryImpl @Inject constructor(
 }
 
 // --- Mapper Functions ---
+
+private fun CategoryWithTotal.toDomain(): CategorySpending {
+    return CategorySpending(
+        category = this.category.toDomain(),
+        total = this.total
+    )
+}
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun ExpenseWithCategory.toDomain(): Expense {

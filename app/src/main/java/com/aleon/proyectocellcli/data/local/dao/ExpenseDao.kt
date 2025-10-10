@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.aleon.proyectocellcli.data.local.entity.CategoryEntity
+import com.aleon.proyectocellcli.data.local.entity.CategoryWithTotal
 import com.aleon.proyectocellcli.data.local.entity.ExpenseEntity
 import com.aleon.proyectocellcli.data.local.entity.ExpenseWithCategory
 import kotlinx.coroutines.flow.Flow
@@ -32,6 +33,17 @@ interface ExpenseDao {
     @Transaction
     @Query("SELECT * FROM expenses WHERE expenseId = :id")
     fun getExpenseWithCategoryById(id: Long): Flow<ExpenseWithCategory?>
+
+    @Transaction
+    @Query("""
+        SELECT c.*, SUM(e.amount) as total
+        FROM categories c
+        JOIN expenses e ON c.categoryId = e.expenseCategoryId
+        GROUP BY c.categoryId
+        ORDER BY total DESC
+    """)
+    fun getCategoryTotals(): Flow<List<CategoryWithTotal>>
+
 
 
     @Query("SELECT * FROM categories ORDER BY name ASC")
